@@ -271,13 +271,6 @@ export default function LandingPage({ onOpenAuth }) {
             <span className="font-bold text-slate-800">Plannest POS</span>
             <span>•</span>
             <span>pos.plannestapp.com</span>
-            <span>•</span>
-            <button
-              onClick={() => onOpenAuth('admin')}
-              className="text-slate-400 hover:text-purple-600 font-semibold transition underline cursor-pointer"
-            >
-              Super Admin Cockpit
-            </button>
           </div>
           <p>© 2026 Plannest Systems. All rights reserved.</p>
         </div>

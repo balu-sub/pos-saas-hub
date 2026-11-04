@@ -23,10 +23,9 @@ import {
 } from 'lucide-react';
 
 export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess }) {
-  const [mode, setMode] = useState(initialMode || 'signin'); // 'signin' | 'signup' | 'admin'
+  const [mode, setMode] = useState(initialMode || 'signin'); // 'signin' | 'signup'
   const [storeIdInput, setStoreIdInput] = useState('');
   const [pinInput, setPinInput] = useState('1234');
-  const [adminPinInput, setAdminPinInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -56,17 +55,36 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
 
   if (!isOpen) return null;
 
-  // Handle Store Owner Sign In
+  // Handle Unified Sign In (Identifies Store Owner vs Super Admin automatically)
   const handleStoreSignIn = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    const idToSearch = storeIdInput.trim().toUpperCase();
+    const rawId = storeIdInput.trim();
+    const pin = pinInput.trim().toLowerCase();
 
-    if (!idToSearch) {
-      setErrorMsg('Please enter your Store ID (e.g. STORE-002)');
+    if (!rawId) {
+      setErrorMsg('Please enter your Store ID');
       return;
     }
 
+    // INTERNAL SUPER ADMIN DETECTION:
+    // If entered login ID is admin/superadmin/balu/master with PIN 1234, route to Super Admin Cockpit
+    const lowerId = rawId.toLowerCase();
+    if (
+      (lowerId === 'admin' || lowerId === 'superadmin' || lowerId === 'balu' || lowerId === 'balu-sub' || lowerId === 'master' || lowerId === 'pln-admin') &&
+      (pin === '1234' || pin === 'admin')
+    ) {
+      const session = {
+        role: 'super_admin',
+        username: 'Balu (Admin)',
+      };
+      localStorage.setItem('plannest_session', JSON.stringify(session));
+      onLoginSuccess(session);
+      onClose();
+      return;
+    }
+
+    const idToSearch = rawId.toUpperCase();
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -84,7 +102,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
           .single();
 
         if (altErr || !altData) {
-          setErrorMsg(`Store ID "${idToSearch}" not found in Supabase database.`);
+          setErrorMsg(`Store ID "${idToSearch}" not found. Please check your Store ID or register below.`);
           setLoading(false);
           return;
         }
@@ -111,24 +129,6 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
     localStorage.setItem('plannest_session', JSON.stringify(session));
     onLoginSuccess(session);
     onClose();
-  };
-
-  // Handle Super Admin Sign In
-  const handleAdminSignIn = (e) => {
-    e.preventDefault();
-    setErrorMsg('');
-    const val = adminPinInput.trim().toLowerCase();
-    if (val === '1234' || val === 'admin' || val === 'balu' || val === 'balu-sub') {
-      const session = {
-        role: 'super_admin',
-        username: 'Balu (Super Admin)',
-      };
-      localStorage.setItem('plannest_session', JSON.stringify(session));
-      onLoginSuccess(session);
-      onClose();
-    } else {
-      setErrorMsg('Invalid Super Admin PIN. Default is 1234');
-    }
   };
 
   // Handle New Store Registration & License Request
@@ -223,7 +223,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
               </div>
               <ul className="space-y-1.5 text-[11px] text-slate-600 list-disc list-inside">
                 <li>
-                  Our administrator (Super Admin) has received your outlet details.
+                  Our licensing team has received your outlet details.
                 </li>
                 <li>
                   Your machine-locked License Key will be generated and delivered to{' '}
@@ -261,43 +261,31 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
           /* FORM STATE: Sign In vs Sign Up */
           /* ------------------------------------------------------------- */
           <div>
-            {/* Modal Navigation Tabs */}
+            {/* Modal Navigation Tabs: Only Sign In and Sign Up for customers */}
             <div className="flex border-b border-slate-200 pb-3 mb-6 gap-2 text-xs font-bold uppercase tracking-wider">
               <button
                 type="button"
                 onClick={() => { setMode('signin'); setErrorMsg(''); }}
-                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                className={`flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 ${
                   mode === 'signin'
                     ? 'bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold'
                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                 }`}
               >
-                <Store className="w-3.5 h-3.5" />
+                <Store className="w-4 h-4" />
                 <span>Store Sign In</span>
               </button>
               <button
                 type="button"
                 onClick={() => { setMode('signup'); setErrorMsg(''); }}
-                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                className={`flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 ${
                   mode === 'signup'
                     ? 'bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold'
                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                 }`}
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
                 <span>New Store Sign Up</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('admin'); setErrorMsg(''); }}
-                className={`px-3 py-2 rounded-xl transition ml-auto flex items-center gap-1.5 ${
-                  mode === 'admin'
-                    ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs font-extrabold'
-                    : 'text-slate-400 hover:text-purple-700 hover:bg-purple-50/50'
-                }`}
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Super Admin</span>
               </button>
             </div>
 
@@ -384,7 +372,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">Register Outlet &amp; Request License</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Submit your store details. Super Admin will review, generate your machine-locked License Key, and deliver it to your email.
+                    Submit your store details. Your machine-locked License Key will be generated and delivered to your email.
                   </p>
                 </div>
 
@@ -512,7 +500,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                     <Laptop className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                   </div>
                   <span className="text-[10.5px] text-slate-400 mt-1 block">
-                    If known, enter your counter PC's MAC address or Computer UUID. If blank, Super Admin generates your license, and our 1-click installer detects it automatically.
+                    If known, enter your counter PC's MAC address or Computer UUID. If blank, our 1-click installer detects it automatically.
                   </span>
                 </div>
 
@@ -535,41 +523,6 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                     Sign in to Store Portal →
                   </button>
                 </div>
-              </form>
-            )}
-
-            {/* TAB 3: SUPER ADMIN LOGIN */}
-            {mode === 'admin' && (
-              <form onSubmit={handleAdminSignIn} className="space-y-4">
-                <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-purple-900 text-xs">
-                  <span className="font-bold">Super Admin Cockpit:</span> Access pending store registrations, generate &amp; email machine licenses, and monitor live fleet telemetry across all outlets.
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                    Super Admin PIN / Access Key
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      required
-                      placeholder="Default: 1234"
-                      value={adminPinInput}
-                      onChange={(e) => setAdminPinInput(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-lg tracking-widest font-mono font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                      autoFocus
-                    />
-                    <Lock className="w-5 h-5 text-slate-400 absolute right-3.5 top-3" />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs"
-                >
-                  <span>Open Master SaaS Cockpit</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </form>
             )}
           </div>
