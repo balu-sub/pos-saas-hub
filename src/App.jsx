@@ -46,12 +46,15 @@ export default function App() {
   return (
     <>
       <LandingPage onOpenAuth={handleOpenAuth} />
-      <AuthModal
-        isOpen={isAuthOpen}
-        initialMode={authMode}
-        onClose={() => setIsAuthOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
+      {isAuthOpen && (
+        <AuthModal
+          key={authMode}
+          isOpen={isAuthOpen}
+          initialMode={authMode}
+          onClose={() => setIsAuthOpen(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      )}
     </>
   );
 }

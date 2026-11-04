@@ -28,7 +28,13 @@ import {
   X,
   Clock,
   Printer,
-  Scale
+  Scale,
+  Mail,
+  User,
+  Phone,
+  Copy,
+  Send,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function SaasAdminCockpit({ onLogout }) {
@@ -65,16 +71,137 @@ export default function SaasAdminCockpit({ onLogout }) {
     months: 12,
   });
 
+  // Modal to show generated email for issued license
+  const [issuedLicenseModal, setIssuedLicenseModal] = useState(null);
+  const [copiedEmailText, setCopiedEmailText] = useState(false);
+  const [copiedKeyText, setCopiedKeyText] = useState(false);
+
+  // Review & Issue License modal for a pending store
+  const [reviewingStore, setReviewingStore] = useState(null);
+
   const [pingStatus, setPingStatus] = useState({});
 
-  // Fetch all SaaS data
+  const generateLicenseKey = (apptype) => {
+    const isWindows = (apptype || 'windows') === 'windows';
+    const tierPrefix = isWindows ? 'WIN' : 'ESP';
+    return `PLN-${tierPrefix}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-2026`;
+  };
+
+  const openLicenseReview = (st) => {
+    setReviewingStore({
+      store: st,
+      machineId: st.bill_config?.machine_id || '',
+      licenseKey: generateLicenseKey(st.apptype),
+      months: 12,
+      planTier: (st.apptype || 'windows') === 'windows' ? 'pro' : 'lite',
+    });
+  };
+
+  const handleConfirmIssueLicense = async () => {
+    if (!reviewingStore) return;
+    const { store: st, machineId, licenseKey, months, planTier } = reviewingStore;
+
+    setLoading(true);
+    try {
+      const expDate = new Date();
+      expDate.setMonth(expDate.getMonth() + Number(months || 12));
+      const boundMachine = machineId?.trim() || null;
+      const cleanKey = licenseKey.trim().toUpperCase();
+
+      // 1. Insert into saas_licenses
+      const licRecord = {
+        id: `LIC-${Date.now()}`,
+        user_id: st.id,
+        license_key: cleanKey,
+        token: btoa(`${cleanKey}:${st.id}`),
+        plan_tier: planTier,
+        status: 'active',
+        hardware_uuid: boundMachine, // Pre-locked if machine ID given, otherwise null to auto-bind on launch
+        expires_at: expDate.toISOString().split('T')[0],
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: licErr } = await supabase.from('saas_licenses').insert([licRecord]);
+      if (licErr) throw licErr;
+
+      // 2. Activate store in stores table
+      const updatedConfig = {
+        ...(st.bill_config || {}),
+        registration_status: 'active',
+        machine_id: boundMachine,
+        issued_license_key: cleanKey,
+        license_issued_at: new Date().toISOString(),
+      };
+
+      const { error: updErr } = await supabase
+        .from('stores')
+        .update({
+          is_active: true,
+          bill_config: updatedConfig,
+        })
+        .eq('id', st.id);
+
+      if (updErr) throw updErr;
+
+      // 3. Prepare email text
+      const ownerName = st.bill_config?.owner_name || 'Store Owner';
+      const ownerEmail = st.bill_config?.owner_email || st.phone || '';
+      const emailBody = `Subject: Your Plannest POS Terminal License Key & Activation Details
+
+Dear ${ownerName},
+
+Thank you for registering "${st.name}" with Plannest POS!
+
+Your outlet has been approved and your official machine license has been generated:
+-------------------------------------------------------------
+• Store ID:        ${st.id}
+• License Key:     ${cleanKey}
+• Hardware Lock:   ${boundMachine ? `Locked to MAC: ${boundMachine}` : 'Will bind to your computer on first run'}
+• Default PIN:     1234
+• Plan Validity:   ${months} Months (Expires ${expDate.toISOString().split('T')[0]})
+-------------------------------------------------------------
+
+HOW TO ACTIVATE YOUR COUNTER TERMINAL:
+1. Download the Windows installer on your cashier counter PC:
+   https://pos.plannestapp.com/PlannestPOS-Setup.exe
+
+2. Run PlannestPOS-Setup.exe and enter your License Key above.
+   The installer will automatically bind your computer's MAC address and create a "Plannest POS Terminal" desktop shortcut!
+
+3. Open the desktop shortcut to start high-speed retail checkout!
+
+CLOUD STORE MANAGER:
+Manage your product catalog, prices, and daily reports anytime at:
+https://pospro.plannestapp.com
+
+Need support? Reply to this email or contact Plannest Support.`;
+
+      setReviewingStore(null);
+      setIssuedLicenseModal({
+        store: st,
+        licenseKey: cleanKey,
+        ownerEmail,
+        ownerName,
+        boundMachine,
+        emailText: emailBody,
+      });
+
+      await fetchData();
+    } catch (err) {
+      alert('Failed to issue license: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch all SaaS data from Supabase
   const fetchData = async () => {
     setLoading(true);
     try {
       const { data: storesData } = await supabase
         .from('stores')
         .select('*')
-        .order('id', { ascending: true });
+        .order('created_at', { ascending: false });
       if (storesData) setStores(storesData);
 
       const { data: devData } = await supabase
@@ -104,6 +231,16 @@ export default function SaasAdminCockpit({ onLogout }) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Separate pending registration requests vs active stores
+  const pendingRequests = stores.filter(
+    (st) => !st.is_active || st.bill_config?.registration_status === 'pending_license'
+  );
+  const activeStores = stores.filter(
+    (st) => st.is_active && st.bill_config?.registration_status !== 'pending_license'
+  );
+
+
 
   const handleCreateStore = async (e) => {
     e.preventDefault();
@@ -172,7 +309,7 @@ export default function SaasAdminCockpit({ onLogout }) {
           token: btoa(randomKey + ':' + Date.now()),
           plan_tier: newLicense.plan_tier,
           status: 'active',
-          hardware_uuid: null, // Unbound initially, binds on first terminal launch
+          hardware_uuid: null,
           expires_at: expDate.toISOString().split('T')[0],
           created_at: new Date().toISOString(),
         },
@@ -196,7 +333,7 @@ export default function SaasAdminCockpit({ onLogout }) {
     }, 600);
   };
 
-  const filteredStores = stores.filter((st) => {
+  const filteredStores = activeStores.filter((st) => {
     const matchesType = storeFilter === 'all' || (st.apptype || 'windows') === storeFilter;
     const matchesSearch =
       st.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -228,6 +365,12 @@ export default function SaasAdminCockpit({ onLogout }) {
 
             {/* Status Chips */}
             <div className="hidden lg:flex items-center gap-2.5 text-[11px] font-mono">
+              {pendingRequests.length > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-300 rounded-lg text-amber-800 font-bold animate-pulse">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{pendingRequests.length} PENDING LICENSE REQUESTS</span>
+                </div>
+              )}
               <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>FLEET ONLINE</span>
@@ -235,10 +378,6 @@ export default function SaasAdminCockpit({ onLogout }) {
               <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-semibold">
                 <Database className="w-3.5 h-3.5 text-[#00478c]" />
                 <span>SUPABASE TOKYO</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-purple-50 border border-purple-200 rounded-lg text-purple-800 font-semibold">
-                <Store className="w-3.5 h-3.5" />
-                <span>{stores.length} STORES</span>
               </div>
             </div>
 
@@ -284,7 +423,12 @@ export default function SaasAdminCockpit({ onLogout }) {
               }`}
             >
               <Store className="w-3.5 h-3.5" />
-              <span>Stores &amp; Tenants ({stores.length})</span>
+              <span>Active Stores ({activeStores.length})</span>
+              {pendingRequests.length > 0 && (
+                <span className="px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[10px] font-mono">
+                  {pendingRequests.length}
+                </span>
+              )}
             </button>
 
             <button
@@ -339,15 +483,102 @@ export default function SaasAdminCockpit({ onLogout }) {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* TAB 1: STORES */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* ============================================================= */}
+        {/* SECTION A: PENDING STORE REGISTRATIONS & LICENSE REQUESTS     */}
+        {/* ============================================================= */}
+        {pendingRequests.length > 0 && (
+          <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-black text-amber-950 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                  <span>Pending Store Registrations &amp; License Requests ({pendingRequests.length})</span>
+                </h3>
+                <p className="text-xs text-amber-800 mt-0.5">
+                  New clients submitted these store details. Click "Generate &amp; Issue License" to create their machine key and email it to them.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pendingRequests.map((st) => {
+                const ownerName = st.bill_config?.owner_name || 'Owner';
+                const ownerEmail = st.bill_config?.owner_email || 'N/A';
+                const counterCount = st.bill_config?.counter_count || 1;
+                const isWindows = (st.apptype || 'windows') === 'windows';
+
+                return (
+                  <div key={st.id} className="bg-white rounded-xl border border-amber-200 p-4 shadow-2xs space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-black px-2 py-0.5 bg-amber-100 text-amber-900 rounded">
+                        {st.id}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                        {isWindows ? 'Windows POS (Touch)' : 'CrowPanel ESP (7.0")'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-extrabold text-slate-900 text-sm">{st.name}</h4>
+                      <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{ownerName}</span>
+                        <span>•</span>
+                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="font-semibold">{ownerEmail}</span>
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Phone: {st.phone || 'N/A'} • City: {st.address_line1 || 'N/A'} • {counterCount} Checkout Lane(s)
+                      </p>
+                    </div>
+
+                    {/* Machine ID info */}
+                    <div className="p-2 bg-slate-50 rounded-lg border border-slate-200/60 flex items-center justify-between text-xs">
+                      <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                        <Laptop className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Target Machine MAC:</span>
+                      </span>
+                      {st.bill_config?.machine_id ? (
+                        <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 text-[11px]">
+                          {st.bill_config.machine_id}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 italic text-[11px]">
+                          Pending (Auto-bind on install)
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-amber-700 font-semibold">
+                        Awaiting License Key
+                      </span>
+
+                      <button
+                        onClick={() => openLicenseReview(st)}
+                        disabled={loading}
+                        className="px-3.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Key className="w-3.5 h-3.5" />
+                        <span>Pick Machine ID &amp; Issue License</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 1: ACTIVE STORES */}
         {activeTab === 'stores' && (
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-black text-slate-900">Registered Stores &amp; Device Tenants</h2>
+                <h2 className="text-xl font-black text-slate-900">Active Stores &amp; Outlets ({activeStores.length})</h2>
                 <p className="text-xs text-slate-500">
-                  Manage all stores across CrowPanel ESP hardware, Windows terminals, and Android tablets
+                  Manage active client stores across CrowPanel ESP hardware and Windows terminals
                 </p>
               </div>
 
@@ -356,7 +587,7 @@ export default function SaasAdminCockpit({ onLogout }) {
                 className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
-                <span>Onboard New Store</span>
+                <span>Onboard New Store Manually</span>
               </button>
             </div>
 
@@ -371,7 +602,7 @@ export default function SaasAdminCockpit({ onLogout }) {
                       storeFilter === 'all' ? 'bg-white shadow-xs font-bold text-slate-900' : 'text-slate-600'
                     }`}
                   >
-                    All ({stores.length})
+                    All ({activeStores.length})
                   </button>
                   <button
                     onClick={() => setStoreFilter('esp')}
@@ -585,7 +816,7 @@ export default function SaasAdminCockpit({ onLogout }) {
                 className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
-                <span>Issue New License</span>
+                <span>Issue New License Manually</span>
               </button>
             </div>
 
@@ -596,7 +827,7 @@ export default function SaasAdminCockpit({ onLogout }) {
                     <tr>
                       <th className="px-5 py-3.5">License Key</th>
                       <th className="px-5 py-3.5">Store ID</th>
-                      <th className="px-5 py-3.5">Hardware Lock (UUID / MAC)</th>
+                      <th className="px-5 py-3.5">Hardware Lock (MAC Address / UUID)</th>
                       <th className="px-5 py-3.5">Tier</th>
                       <th className="px-5 py-3.5">Expires</th>
                       <th className="px-5 py-3.5 text-right">Binding Status</th>
@@ -608,7 +839,11 @@ export default function SaasAdminCockpit({ onLogout }) {
                         <td className="px-5 py-4 font-mono font-bold text-slate-900">{lic.license_key}</td>
                         <td className="px-5 py-4 font-semibold text-slate-700">{lic.user_id}</td>
                         <td className="px-5 py-4 font-mono text-[11px] text-slate-600">
-                          {lic.hardware_uuid || <span className="text-amber-600 italic">Unbound (Ready for first PC)</span>}
+                          {lic.hardware_uuid ? (
+                            <span className="font-bold text-slate-800">{lic.hardware_uuid}</span>
+                          ) : (
+                            <span className="text-amber-600 italic">Unbound (Claims first machine on launch)</span>
+                          )}
                         </td>
                         <td className="px-5 py-4">
                           <span className="uppercase text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
@@ -619,7 +854,7 @@ export default function SaasAdminCockpit({ onLogout }) {
                         <td className="px-5 py-4 text-right">
                           <span className="text-emerald-600 font-semibold flex items-center justify-end gap-1">
                             <ShieldCheck className="w-3.5 h-3.5" />
-                            Active
+                            {lic.hardware_uuid ? 'Locked to MAC' : 'Active'}
                           </span>
                         </td>
                       </tr>
@@ -637,12 +872,12 @@ export default function SaasAdminCockpit({ onLogout }) {
             <h2 className="text-xl font-black text-slate-900">New Client Onboarding Wizard</h2>
             <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4">
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono text-xs text-slate-700 space-y-2">
-                <div className="font-bold text-slate-900">Windows Automated 1-Click Launch Script:</div>
+                <div className="font-bold text-slate-900">Windows Graphical Setup Installer (.exe):</div>
                 <div className="p-2.5 bg-slate-900 text-emerald-400 rounded-lg overflow-x-auto">
-                  powershell -ExecutionPolicy Bypass -Command "iwr -useb https://pos.plannestapp.com/install.ps1 | iex"
+                  https://pos.plannestapp.com/PlannestPOS-Setup.exe
                 </div>
                 <p className="text-[11px] text-slate-500 font-sans">
-                  Installs node runtime, initializes SQLite WAL mode, and locks license key to the terminal hardware UUID.
+                  The client downloads this setup, enters their license key, and the installer automatically registers their machine's MAC address in Supabase and creates a Desktop shortcut.
                 </p>
               </div>
             </div>
@@ -670,6 +905,262 @@ export default function SaasAdminCockpit({ onLogout }) {
           </div>
         )}
       </main>
+
+      {/* MODAL 1: Review Registration & Pick Machine ID */}
+      {reviewingStore && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 uppercase tracking-wider">
+                  Review &amp; Issue License
+                </span>
+                <h3 className="font-black text-slate-900 text-base mt-1">
+                  {reviewingStore.store.name} ({reviewingStore.store.id})
+                </h3>
+              </div>
+              <button
+                onClick={() => setReviewingStore(null)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Store Quick Summary Card */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5 text-slate-700">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Contact / Owner:</span>
+                <span className="font-semibold text-slate-900">{reviewingStore.store.bill_config?.owner_name || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Email:</span>
+                <span className="font-mono text-purple-700 font-semibold">{reviewingStore.store.bill_config?.owner_email || reviewingStore.store.phone || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Phone &amp; Location:</span>
+                <span className="text-slate-800">{reviewingStore.store.phone || 'N/A'} • {reviewingStore.store.address_line1 || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Terminal Tier:</span>
+                <span className="font-bold text-slate-900 uppercase">{reviewingStore.planTier} ({reviewingStore.store.apptype})</span>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Machine ID / MAC Address */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold uppercase text-slate-700 flex items-center gap-1.5">
+                    <Laptop className="w-3.5 h-3.5 text-purple-700" />
+                    <span>Hardware Lock (Target MAC Address / UUID):</span>
+                  </label>
+                  {reviewingStore.machineId ? (
+                    <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Provided by Customer
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      Unbound / Auto-bind
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. 2C-56-DC-1B-44-A9 (Leave empty to auto-bind on install)"
+                  value={reviewingStore.machineId}
+                  onChange={(e) => setReviewingStore({ ...reviewingStore, machineId: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-purple-600"
+                />
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  You can type or paste the customer's machine MAC address now, or leave it blank to automatically lock to the first computer that runs PlannestPOS-Setup.exe.
+                </span>
+              </div>
+
+              {/* License Key */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold uppercase text-slate-700 flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-purple-700" />
+                    <span>Assigned License Key:</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setReviewingStore({ ...reviewingStore, licenseKey: generateLicenseKey(reviewingStore.store.apptype) })}
+                    className="text-[11px] text-purple-700 hover:underline flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Regenerate Key</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={reviewingStore.licenseKey}
+                  onChange={(e) => setReviewingStore({ ...reviewingStore, licenseKey: e.target.value.toUpperCase() })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm font-black text-purple-900 tracking-wider focus:bg-white focus:ring-2 focus:ring-purple-600"
+                />
+              </div>
+
+              {/* Plan Validity Months */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold uppercase text-slate-700 mb-1 block">Plan Tier</label>
+                  <select
+                    value={reviewingStore.planTier}
+                    onChange={(e) => setReviewingStore({ ...reviewingStore, planTier: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-medium"
+                  >
+                    <option value="pro">Pro (Windows Offline POS)</option>
+                    <option value="lite">Lite (CrowPanel ESP32)</option>
+                    <option value="enterprise">Enterprise Fleet</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-bold uppercase text-slate-700 mb-1 block">Duration</label>
+                  <select
+                    value={reviewingStore.months}
+                    onChange={(e) => setReviewingStore({ ...reviewingStore, months: Number(e.target.value) })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-medium"
+                  >
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months (1 Year)</option>
+                    <option value="24">24 Months (2 Years)</option>
+                    <option value="36">36 Months (3 Years)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setReviewingStore(null)}
+                className="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmIssueLicense}
+                disabled={loading}
+                className="w-2/3 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2"
+              >
+                <Key className="w-4 h-4" />
+                <span>{loading ? 'Activating...' : 'Issue License & Send to Client'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Show Generated License & Email to Super Admin */}
+      {issuedLicenseModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                  License Generated Successfully
+                </span>
+                <h3 className="font-black text-slate-900 text-base mt-1">
+                  License for {issuedLicenseModal.store.name} ({issuedLicenseModal.store.id})
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setIssuedLicenseModal(null);
+                  setCopiedEmailText(false);
+                  setCopiedKeyText(false);
+                }}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-purple-700 font-bold uppercase">Generated License Key:</span>
+                <span className="text-[11px] font-mono font-bold text-slate-600">
+                  {issuedLicenseModal.boundMachine ? `Locked to: ${issuedLicenseModal.boundMachine}` : 'Unbound (Auto-claims on install)'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-mono font-black text-purple-900">
+                  {issuedLicenseModal.licenseKey}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(issuedLicenseModal.licenseKey);
+                    setCopiedKeyText(true);
+                    setTimeout(() => setCopiedKeyText(false), 2000);
+                  }}
+                  className="px-2.5 py-1 bg-white border border-purple-200 text-purple-800 rounded-lg text-xs font-bold hover:bg-purple-100 transition flex items-center gap-1 cursor-pointer"
+                >
+                  {copiedKeyText ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedKeyText ? 'Copied Key!' : 'Copy Key'}</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-purple-600 mt-1">
+                {issuedLicenseModal.boundMachine
+                  ? `Machine MAC ${issuedLicenseModal.boundMachine} is pre-locked. No other PC will be able to activate this key.`
+                  : 'Customer PC MAC address will be captured automatically the moment they enter this key in PlannestPOS-Setup.exe!'}
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase">
+                  Ready-to-Send Email / Message to Customer:
+                </label>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`mailto:${encodeURIComponent(issuedLicenseModal.ownerEmail)}?subject=${encodeURIComponent('Your Plannest POS Terminal License Key & Activation Details')}&body=${encodeURIComponent(issuedLicenseModal.emailText)}`}
+                    className="px-2.5 py-1 bg-[#00478c] hover:bg-[#003870] text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Open in Mail App</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(issuedLicenseModal.emailText);
+                      setCopiedEmailText(true);
+                      setTimeout(() => setCopiedEmailText(false), 2000);
+                    }}
+                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedEmailText ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedEmailText ? 'Copied!' : 'Copy Text'}</span>
+                  </button>
+                </div>
+              </div>
+              <textarea
+                readOnly
+                value={issuedLicenseModal.emailText}
+                rows={9}
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 leading-relaxed focus:outline-none"
+              />
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setIssuedLicenseModal(null);
+                  setCopiedEmailText(false);
+                  setCopiedKeyText(false);
+                }}
+                className="w-full py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Store Modal */}
       {isAddStoreOpen && (
@@ -770,7 +1261,7 @@ export default function SaasAdminCockpit({ onLogout }) {
                   onChange={(e) => setNewLicense({ ...newLicense, store_id: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white"
                 >
-                  {stores.map((s) => (
+                  {activeStores.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.id} - {s.name}
                     </option>

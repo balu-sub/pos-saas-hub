@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import {
   Lock,
@@ -10,7 +10,16 @@ import {
   Cpu,
   Smartphone,
   Check,
-  AlertCircle
+  CheckCircle2,
+  AlertCircle,
+  Mail,
+  User,
+  Phone,
+  MapPin,
+  Download,
+  Copy,
+  Send,
+  Plus
 } from 'lucide-react';
 
 export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess }) {
@@ -24,10 +33,26 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
   // Sign up fields
   const [newStore, setNewStore] = useState({
     businessName: '',
+    ownerName: '',
+    email: '',
     phone: '',
     city: 'Chennai',
     apptype: 'windows',
+    counterCount: 1,
+    machineId: '',
   });
+
+  // Success state after submitting registration
+  const [registeredStore, setRegisteredStore] = useState(null);
+
+  // Sync mode whenever modal opens or initialMode changes
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode || 'signin');
+      setErrorMsg('');
+      setRegisteredStore(null);
+    }
+  }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 
@@ -44,7 +69,6 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
 
     setLoading(true);
     try {
-      // 1. Look up in Supabase stores table
       const { data, error } = await supabase
         .from('stores')
         .select('*')
@@ -52,7 +76,6 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
         .single();
 
       if (error || !data) {
-        // Fallback check if user entered STORE-001 or STORE-002 without prefix
         const altId = idToSearch.startsWith('STORE-') ? idToSearch : `STORE-${idToSearch.padStart(3, '0')}`;
         const { data: altData, error: altErr } = await supabase
           .from('stores')
@@ -108,22 +131,22 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
     }
   };
 
-  // Handle New Store Sign Up
+  // Handle New Store Registration & License Request
   const handleSignUp = async (e) => {
     e.preventDefault();
-    if (!newStore.businessName.trim()) {
-      setErrorMsg('Please enter your store name');
+    if (!newStore.businessName.trim() || !newStore.email.trim()) {
+      setErrorMsg('Please fill in both your Store Name and Email Address.');
       return;
     }
 
     setLoading(true);
     setErrorMsg('');
     try {
-      // Generate clean store ID: STORE-XXX
+      // Generate clean reservation Store ID: STORE-XXX
       const randNum = Math.floor(Math.random() * 900) + 100;
       const generatedId = `STORE-${randNum}`;
 
-      // Insert store in Supabase
+      // Insert store in Supabase with is_active: false (pending approval / license issuance)
       const { error: storeErr } = await supabase.from('stores').insert([
         {
           id: generatedId,
@@ -133,47 +156,29 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
           apptype: newStore.apptype,
           bill_prefix: 'INV-',
           starting_bill_no: 1001,
-          is_active: true,
+          is_active: false, // Marked as pending license generation by Super Admin
           bill_config: {
-            terms: 'Goods once sold cannot be returned.',
-            gstRate: '5',
-            showCashier: true,
-            showDualGst: true,
-            showDateTime: true,
-            footerMessage: 'Thank you for shopping with us!\nPlease visit again!',
-            showTaxBreakdown: true,
+            owner_name: newStore.ownerName.trim() || 'Store Owner',
+            owner_email: newStore.email.trim(),
+            counter_count: Number(newStore.counterCount) || 1,
+            machine_id: newStore.machineId?.trim() || null,
+            registration_status: 'pending_license',
+            requested_at: new Date().toISOString(),
           },
         },
       ]);
 
       if (storeErr) throw storeErr;
 
-      // Auto-issue Machine License in Supabase
-      const licenseKey = `PLN-${newStore.apptype.toUpperCase().substring(0, 3)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-2026`;
-      const expDate = new Date();
-      expDate.setFullYear(expDate.getFullYear() + 1);
-
-      await supabase.from('saas_licenses').insert([
-        {
-          id: `LIC-${Date.now()}`,
-          user_id: generatedId,
-          license_key: licenseKey,
-          token: btoa(`${licenseKey}:${generatedId}`),
-          plan_tier: 'pro',
-          status: 'active',
-          expires_at: expDate.toISOString().split('T')[0],
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
-      // Login immediately into their new store portal
-      loginAsStore({
+      // Show success screen with instructions
+      setRegisteredStore({
         id: generatedId,
         name: newStore.businessName.trim(),
+        email: newStore.email.trim(),
         apptype: newStore.apptype,
-        bill_prefix: 'INV-',
-        phone: newStore.phone,
+        machineId: newStore.machineId?.trim() || null,
       });
+      setLoading(false);
     } catch (err) {
       setErrorMsg('Registration failed: ' + err.message);
       setLoading(false);
@@ -181,191 +186,393 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1"
+          className="absolute right-5 top-5 text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Header Tabs */}
-        <div className="flex border-b border-slate-100 pb-3 mb-6 gap-4 text-xs font-bold uppercase tracking-wider">
-          <button
-            onClick={() => { setMode('signin'); setErrorMsg(''); }}
-            className={`pb-2 border-b-2 transition ${
-              mode === 'signin' ? 'border-[#00478c] text-[#00478c]' : 'border-transparent text-slate-400 hover:text-slate-700'
-            }`}
-          >
-            Store Login
-          </button>
-          <button
-            onClick={() => { setMode('signup'); setErrorMsg(''); }}
-            className={`pb-2 border-b-2 transition ${
-              mode === 'signup' ? 'border-[#00478c] text-[#00478c]' : 'border-transparent text-slate-400 hover:text-slate-700'
-            }`}
-          >
-            New Free Trial
-          </button>
-          <button
-            onClick={() => { setMode('admin'); setErrorMsg(''); }}
-            className={`pb-2 border-b-2 transition ml-auto ${
-              mode === 'admin' ? 'border-purple-600 text-purple-700' : 'border-transparent text-slate-400 hover:text-purple-600'
-            }`}
-          >
-            Super Admin
-          </button>
-        </div>
+        {/* ------------------------------------------------------------- */}
+        {/* SUCCESS STATE: Registration Submitted */}
+        {/* ------------------------------------------------------------- */}
+        {registeredStore ? (
+          <div className="text-center space-y-4 py-2">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
 
-        {errorMsg && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {/* MODE 1: STORE OWNER LOGIN */}
-        {mode === 'signin' && (
-          <form onSubmit={handleStoreSignIn} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                Store ID
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. STORE-002 or STORE-001"
-                value={storeIdInput}
-                onChange={(e) => setStoreIdInput(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00478c] uppercase"
-                autoFocus
-              />
-              <span className="text-[11px] text-slate-400 mt-1 block">
-                Use <strong>STORE-002</strong> for Windows POS, or <strong>STORE-001</strong> for ESP POS
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                Registration Received
               </span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+                Store ID Reserved: <span className="text-[#00478c] font-mono">{registeredStore.id}</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                For <strong>{registeredStore.name}</strong>
+              </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                Store PIN / Password
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="Default: 1234"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00478c]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs"
-            >
-              <span>{loading ? 'Verifying with Supabase...' : 'Enter Store Portal'}</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </form>
-        )}
-
-        {/* MODE 2: NEW STORE SIGN UP */}
-        {mode === 'signup' && (
-          <form onSubmit={handleSignUp} className="space-y-4 text-xs">
-            <div>
-              <label className="block font-semibold uppercase text-slate-600 mb-1">Business / Store Name</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Daily Supermarket"
-                value={newStore.businessName}
-                onChange={(e) => setNewStore({ ...newStore, businessName: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-[#00478c]"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold uppercase text-slate-600 mb-1">Phone Number</label>
-                <input
-                  type="text"
-                  placeholder="+91 98765 43210"
-                  value={newStore.phone}
-                  onChange={(e) => setNewStore({ ...newStore, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl"
-                />
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-left text-xs space-y-2 text-slate-700">
+              <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Send className="w-4 h-4 text-[#00478c]" />
+                <span>What Happens Next:</span>
               </div>
-              <div>
-                <label className="block font-semibold uppercase text-slate-600 mb-1">City</label>
-                <input
-                  type="text"
-                  placeholder="Chennai"
-                  value={newStore.city}
-                  onChange={(e) => setNewStore({ ...newStore, city: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl"
-                />
-              </div>
+              <ul className="space-y-1.5 text-[11px] text-slate-600 list-disc list-inside">
+                <li>
+                  Our administrator (Super Admin) has received your outlet details.
+                </li>
+                <li>
+                  Your machine-locked License Key will be generated and delivered to{' '}
+                  <strong className="text-slate-900">{registeredStore.email}</strong>.
+                </li>
+                <li>
+                  In the meantime, you can download the 1-click installer on your billing counter PC below.
+                </li>
+              </ul>
             </div>
 
-            <div>
-              <label className="block font-semibold uppercase text-slate-600 mb-1">Primary Device Tier</label>
-              <select
-                value={newStore.apptype}
-                onChange={(e) => setNewStore({ ...newStore, apptype: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white font-medium"
+            {registeredStore.apptype === 'windows' && (
+              <a
+                href="/PlannestPOS-Setup.exe"
+                download="PlannestPOS-Setup.exe"
+                className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center justify-center gap-2"
               >
-                <option value="windows">Windows PC POS (Local Touchscreen)</option>
-                <option value="esp">CrowPanel ESP32 Hardware (7.0")</option>
-                <option value="android">Android Mobile/Tablet</option>
-              </select>
-            </div>
+                <Download className="w-4 h-4" />
+                <span>Download Windows Installer (PlannestPOS-Setup.exe)</span>
+              </a>
+            )}
 
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2"
+              onClick={() => {
+                setRegisteredStore(null);
+                onClose();
+              }}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800 pt-2 block mx-auto underline"
             >
-              <span>{loading ? 'Creating store on Supabase...' : 'Start Instant Trial'}</span>
-              <ChevronRight className="w-4 h-4" />
+              Back to Home
             </button>
-          </form>
-        )}
-
-        {/* MODE 3: SUPER ADMIN LOGIN */}
-        {mode === 'admin' && (
-          <form onSubmit={handleAdminSignIn} className="space-y-4">
-            <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-purple-900 text-xs">
-              <span className="font-bold">Super Admin Access:</span> Unlocks Master Fleet Telemetry, Global Store Registry, License Generator, and OTA firmware channels across all stores.
+          </div>
+        ) : (
+          /* ------------------------------------------------------------- */
+          /* FORM STATE: Sign In vs Sign Up */
+          /* ------------------------------------------------------------- */
+          <div>
+            {/* Modal Navigation Tabs */}
+            <div className="flex border-b border-slate-200 pb-3 mb-6 gap-2 text-xs font-bold uppercase tracking-wider">
+              <button
+                type="button"
+                onClick={() => { setMode('signin'); setErrorMsg(''); }}
+                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                  mode === 'signin'
+                    ? 'bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                <Store className="w-3.5 h-3.5" />
+                <span>Store Sign In</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('signup'); setErrorMsg(''); }}
+                className={`px-3 py-2 rounded-xl transition flex items-center gap-1.5 ${
+                  mode === 'signup'
+                    ? 'bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Store Sign Up</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('admin'); setErrorMsg(''); }}
+                className={`px-3 py-2 rounded-xl transition ml-auto flex items-center gap-1.5 ${
+                  mode === 'admin'
+                    ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs font-extrabold'
+                    : 'text-slate-400 hover:text-purple-700 hover:bg-purple-50/50'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Super Admin</span>
+              </button>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                Admin Master PIN
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  required
-                  placeholder="Default: 1234"
-                  value={adminPinInput}
-                  onChange={(e) => setAdminPinInput(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-lg tracking-widest font-mono font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
-                  autoFocus
-                />
-                <Lock className="w-5 h-5 text-slate-400 absolute right-3.5 top-3" />
+            {errorMsg && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{errorMsg}</span>
               </div>
-            </div>
+            )}
 
-            <button
-              type="submit"
-              className="w-full py-3 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs"
-            >
-              <span>Open Master SaaS Cockpit</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </form>
+            {/* TAB 1: STORE OWNER SIGN IN */}
+            {mode === 'signin' && (
+              <form onSubmit={handleStoreSignIn} className="space-y-4">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">Store Owner Portal Sign In</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Sign in with your assigned Store ID to manage your product catalog, prices, and reports.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+                    Store ID
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. STORE-002"
+                      value={storeIdInput}
+                      onChange={(e) => setStoreIdInput(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00478c]"
+                      autoFocus
+                    />
+                    <Store className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  </div>
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    Use <strong>STORE-002</strong> (Windows POS) or <strong>STORE-001</strong> (ESP CrowPanel)
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+                    Store PIN / Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      required
+                      placeholder="Default: 1234"
+                      value={pinInput}
+                      onChange={(e) => setPinInput(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00478c]"
+                    />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs"
+                >
+                  <span>{loading ? 'Verifying Store in Supabase...' : 'Open Store Manager'}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                <div className="pt-2 text-center text-xs text-slate-500">
+                  New store owner?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setMode('signup'); setErrorMsg(''); }}
+                    className="text-[#00478c] font-bold underline"
+                  >
+                    Register Store &amp; Request License →
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 2: NEW STORE SIGN UP & LICENSE REQUEST */}
+            {mode === 'signup' && (
+              <form onSubmit={handleSignUp} className="space-y-3.5 text-xs">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">Register Outlet &amp; Request License</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Submit your store details. Super Admin will review, generate your machine-locked License Key, and deliver it to your email.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold uppercase text-slate-600 mb-1">
+                    Store / Supermarket Name
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Annai Supermarket"
+                      value={newStore.businessName}
+                      onChange={(e) => setNewStore({ ...newStore, businessName: e.target.value })}
+                      className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-[#00478c]"
+                    />
+                    <Store className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold uppercase text-slate-600 mb-1">Owner Name</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="e.g. Ramesh Kumar"
+                        value={newStore.ownerName}
+                        onChange={(e) => setNewStore({ ...newStore, ownerName: e.target.value })}
+                        className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl"
+                      />
+                      <User className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold uppercase text-slate-600 mb-1">Email (License Delivery)</label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        required
+                        placeholder="owner@supermarket.com"
+                        value={newStore.email}
+                        onChange={(e) => setNewStore({ ...newStore, email: e.target.value })}
+                        className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl"
+                      />
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold uppercase text-slate-600 mb-1">Phone Number</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="+91 98765 43210"
+                        value={newStore.phone}
+                        onChange={(e) => setNewStore({ ...newStore, phone: e.target.value })}
+                        className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl"
+                      />
+                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold uppercase text-slate-600 mb-1">City / Region</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Chennai"
+                        value={newStore.city}
+                        onChange={(e) => setNewStore({ ...newStore, city: e.target.value })}
+                        className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl"
+                      />
+                      <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold uppercase text-slate-600 mb-1">Primary Terminal Tier</label>
+                    <select
+                      value={newStore.apptype}
+                      onChange={(e) => setNewStore({ ...newStore, apptype: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-medium"
+                    >
+                      <option value="windows">Windows PC POS (Local Touch)</option>
+                      <option value="esp">CrowPanel ESP32 Hardware (7.0")</option>
+                      <option value="android">Android Mobile/Tablet</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold uppercase text-slate-600 mb-1">Checkout Counters</label>
+                    <select
+                      value={newStore.counterCount}
+                      onChange={(e) => setNewStore({ ...newStore, counterCount: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-medium"
+                    >
+                      <option value="1">1 Checkout Lane</option>
+                      <option value="2">2 Checkout Lanes</option>
+                      <option value="3">3+ Checkout Lanes</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold uppercase text-slate-600">
+                      Machine ID / MAC Address (Optional)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">e.g. 2C-56-DC-1B-44-A9</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Leave blank if unknown (installer will auto-bind)"
+                      value={newStore.machineId}
+                      onChange={(e) => setNewStore({ ...newStore, machineId: e.target.value })}
+                      className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl font-mono text-xs focus:ring-2 focus:ring-[#00478c]"
+                    />
+                    <Laptop className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  </div>
+                  <span className="text-[10.5px] text-slate-400 mt-1 block">
+                    If known, enter your counter PC's MAC address or Computer UUID. If blank, Super Admin generates your license, and our 1-click installer detects it automatically.
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 mt-2"
+                >
+                  <span>{loading ? 'Submitting Registration...' : 'Submit & Request Machine License'}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                <div className="text-center text-slate-500 pt-1">
+                  Already registered?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setMode('signin'); setErrorMsg(''); }}
+                    className="text-[#00478c] font-bold underline"
+                  >
+                    Sign in to Store Portal →
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 3: SUPER ADMIN LOGIN */}
+            {mode === 'admin' && (
+              <form onSubmit={handleAdminSignIn} className="space-y-4">
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-purple-900 text-xs">
+                  <span className="font-bold">Super Admin Cockpit:</span> Access pending store registrations, generate &amp; email machine licenses, and monitor live fleet telemetry across all outlets.
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+                    Super Admin PIN / Access Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      required
+                      placeholder="Default: 1234"
+                      value={adminPinInput}
+                      onChange={(e) => setAdminPinInput(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-lg tracking-widest font-mono font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-600"
+                      autoFocus
+                    />
+                    <Lock className="w-5 h-5 text-slate-400 absolute right-3.5 top-3" />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs"
+                >
+                  <span>Open Master SaaS Cockpit</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </form>
+            )}
+          </div>
         )}
       </div>
     </div>
