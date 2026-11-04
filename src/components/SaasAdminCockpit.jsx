@@ -93,10 +93,12 @@ export default function SaasAdminCockpit({ onLogout }) {
   };
 
   const openLicenseReview = (st) => {
+    const defaultPassword = st.bill_config?.portal_password || st.bill_config?.pin || '1234';
     setReviewingStore({
       store: st,
       machineId: st.bill_config?.machine_id || '',
       licenseKey: generateLicenseKey(st.apptype),
+      defaultPassword: String(defaultPassword),
       months: 12,
       planTier: (st.apptype || 'windows') === 'windows' ? 'pro' : 'lite',
     });
@@ -104,7 +106,7 @@ export default function SaasAdminCockpit({ onLogout }) {
 
   const handleConfirmIssueLicense = async () => {
     if (!reviewingStore) return;
-    const { store: st, machineId, licenseKey, months, planTier } = reviewingStore;
+    const { store: st, machineId, licenseKey, defaultPassword, months, planTier } = reviewingStore;
 
     setLoading(true);
     try {
@@ -112,6 +114,7 @@ export default function SaasAdminCockpit({ onLogout }) {
       expDate.setMonth(expDate.getMonth() + Number(months || 12));
       const boundMachine = machineId?.trim() || null;
       const cleanKey = licenseKey.trim().toUpperCase();
+      const cleanPass = (defaultPassword || '1234').trim();
 
       // 1. Insert into saas_licenses
       const licRecord = {
@@ -129,13 +132,15 @@ export default function SaasAdminCockpit({ onLogout }) {
       const { error: licErr } = await supabase.from('saas_licenses').insert([licRecord]);
       if (licErr) throw licErr;
 
-      // 2. Activate store in stores table
+      // 2. Activate store in stores table with portal_password and pin
       const updatedConfig = {
         ...(st.bill_config || {}),
         registration_status: 'active',
         machine_id: boundMachine,
         issued_license_key: cleanKey,
         license_issued_at: new Date().toISOString(),
+        portal_password: cleanPass,
+        pin: cleanPass,
       };
 
       const { error: updErr } = await supabase
@@ -148,36 +153,62 @@ export default function SaasAdminCockpit({ onLogout }) {
 
       if (updErr) throw updErr;
 
-      // 3. Prepare email text
+      // 3. Upsert admin user in Windows_users for pospro login
+      try {
+        await supabase.from('Windows_users').upsert([
+          {
+            id: `admin_${st.id}`,
+            store_id: st.id,
+            name: st.bill_config?.owner_name || st.name,
+            pin: cleanPass,
+            role: 'Admin (Full Access & User Mgmt)',
+            role_title: 'Store Owner / General Manager',
+            user_role: 'Admin',
+            email: st.bill_config?.owner_email || '',
+            phone: st.phone || '',
+            initials: (st.bill_config?.owner_name || st.name || 'SO').substring(0, 2).toUpperCase(),
+            status: 'active',
+          }
+        ], { onConflict: 'id' });
+      } catch (userErr) {
+        console.warn('Windows_users sync notice:', userErr);
+      }
+
+      // 4. Prepare email text with Store ID and Password
       const ownerName = st.bill_config?.owner_name || 'Store Owner';
       const ownerEmail = st.bill_config?.owner_email || st.phone || '';
-      const emailBody = `Subject: Your Plannest POS Terminal License Key & Activation Details
+      const emailBody = `Subject: Your Plannest POS Terminal License Key & Store Login Credentials
 
 Dear ${ownerName},
 
 Thank you for registering "${st.name}" with Plannest POS!
 
-Your outlet has been approved and your official machine license has been generated:
+Your outlet has been approved and your official machine license and store login credentials have been generated:
 -------------------------------------------------------------
-• Store ID:        ${st.id}
-• License Key:     ${cleanKey}
-• Hardware Lock:   ${boundMachine ? `Locked to MAC: ${boundMachine}` : 'Will bind to your computer on first run'}
-• Default PIN:     1234
-• Plan Validity:   ${months} Months (Expires ${expDate.toISOString().split('T')[0]})
+• Store ID:           ${st.id}
+• License Key:        ${cleanKey}
+• Hardware Lock:      ${boundMachine ? `Locked to MAC: ${boundMachine}` : 'Will bind to your computer on first run'}
+• Default Password:   ${cleanPass}
+• Plan Validity:      ${months} Months (Expires ${expDate.toISOString().split('T')[0]})
 -------------------------------------------------------------
 
 HOW TO ACTIVATE YOUR COUNTER TERMINAL:
 1. Download the Windows installer on your cashier counter PC:
    https://pos.plannestapp.com/PlannestPOS-Setup.exe
 
-2. Run PlannestPOS-Setup.exe and enter your License Key above.
+2. Run PlannestPOS-Setup.exe and enter your License Key:
+   ${cleanKey}
    The installer will automatically bind your computer's MAC address and create a "Plannest POS Terminal" desktop shortcut!
 
 3. Open the desktop shortcut to start high-speed retail checkout!
 
-CLOUD STORE MANAGER:
+CLOUD STORE MANAGER LOGIN:
 Manage your product catalog, prices, and daily reports anytime at:
-https://pospro.plannestapp.com
+   URL:               https://pospro.plannestapp.com
+   Store ID / Number: ${st.id}
+   Password:          ${cleanPass}
+
+(You can change your password anytime in Store Settings on pospro)
 
 Need support? Reply to this email or contact Plannest Support.`;
 
@@ -185,6 +216,7 @@ Need support? Reply to this email or contact Plannest Support.`;
       setIssuedLicenseModal({
         store: st,
         licenseKey: cleanKey,
+        defaultPassword: cleanPass,
         ownerEmail,
         ownerName,
         boundMachine,
@@ -1253,6 +1285,35 @@ Need support? Reply to this email or contact Plannest Support.`;
                 />
               </div>
 
+              {/* Default Store Password / PIN */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold uppercase text-slate-700 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-700" />
+                    <span>Default Store Password / PIN:</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setReviewingStore({ ...reviewingStore, defaultPassword: Math.floor(1000 + Math.random() * 9000).toString() })}
+                    className="text-[11px] text-purple-700 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Generate Random PIN</span>
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={reviewingStore.defaultPassword}
+                  onChange={(e) => setReviewingStore({ ...reviewingStore, defaultPassword: e.target.value })}
+                  placeholder="e.g. 1234"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm font-black text-slate-900 tracking-wider focus:bg-white focus:ring-2 focus:ring-purple-600"
+                />
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  The customer will use their Store ID ({reviewingStore.store.id}) and this password to log in to pospro.plannestapp.com. They can change it anytime in Store Settings.
+                </span>
+              </div>
+
               {/* Plan Validity Months */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1355,6 +1416,26 @@ Need support? Reply to this email or contact Plannest Support.`;
                   <span>{copiedKeyText ? 'Copied Key!' : 'Copy Key'}</span>
                 </button>
               </div>
+
+              <div className="mt-2 pt-2 border-t border-purple-200/60 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-slate-500">Cloud Store Manager Login: </span>
+                  <span className="font-mono font-bold text-slate-900">{issuedLicenseModal.store.id}</span>
+                  <span className="text-slate-400"> / Password: </span>
+                  <span className="font-mono font-bold text-purple-800">{issuedLicenseModal.defaultPassword}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${issuedLicenseModal.store.id} / ${issuedLicenseModal.defaultPassword}`);
+                    alert('Copied Store ID and Password!');
+                  }}
+                  className="text-purple-700 font-bold hover:underline text-[11px] cursor-pointer"
+                >
+                  Copy Login
+                </button>
+              </div>
+
               <p className="text-[11px] text-purple-600 mt-1">
                 {issuedLicenseModal.boundMachine
                   ? `Machine MAC ${issuedLicenseModal.boundMachine} is pre-locked. No other PC will be able to activate this key.`
