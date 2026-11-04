@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "minRequiredVersion": "1.0.0",
+  "releaseNotes": "Retail Counter POS billing engine with offline SQLite storage, barcode scanner support, and Cloud Sync.",
+  "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
+  "publishedAt": "2026-11-04"
+}
