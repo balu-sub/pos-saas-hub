@@ -205,49 +205,53 @@ export default function StoreOwnerPortal({ session, onLogout }) {
               </span>
             </div>
 
-            {/* 1-Click PowerShell Command */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Method 1: 1-Click Automated Terminal Installer (Recommended)
-              </label>
-              <div className="p-3 bg-slate-900 text-emerald-400 rounded-xl font-mono text-xs flex items-center justify-between gap-3 overflow-x-auto shadow-inner">
-                <span className="truncate">{installCommand}</span>
-                <button
-                  onClick={handleCopyCommand}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-[11px] font-sans font-bold flex items-center gap-1.5 shrink-0 transition"
-                >
-                  {copiedCommand ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedCommand ? 'Copied!' : 'Copy Command'}</span>
-                </button>
+            {/* Graphical Windows Installer Download Card */}
+            <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50/60 rounded-2xl border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900 text-sm">Plannest POS Windows Installer</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#00478c]">
+                    PlannestPOS-Setup.exe
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 max-w-lg">
+                  Single-click graphical installer. Double-click to run, choose your install folder, enter your License Key, and it automatically binds your computer's MAC address, creates a Desktop Icon, and launches checkout!
+                </p>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1.5">
-                Open PowerShell on your counter PC as Administrator, paste this command, and press Enter. It configures the runtime and launches the terminal automatically.
-              </p>
+
+              <a
+                href="/PlannestPOS-Setup.exe"
+                download="PlannestPOS-Setup.exe"
+                className="px-5 py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center gap-2 shrink-0 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Windows Installer (.exe)</span>
+              </a>
             </div>
 
-            {/* Step-by-Step Instructions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="w-6 h-6 rounded-full bg-[#00478c] text-white font-bold text-xs flex items-center justify-center mb-2">1</span>
-                <h4 className="font-bold text-slate-900 text-xs">Download &amp; Extract</h4>
-                <p className="text-[11px] text-slate-600 mt-1">
-                  Keep <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-800 font-mono">E:\Plannest\Local_Web_POS</code> on your billing terminal.
+            {/* 3 Step Visual Workflow */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <span className="w-6 h-6 rounded-full bg-[#00478c] text-white font-bold text-xs flex items-center justify-center">1</span>
+                <h4 className="font-bold text-slate-900 text-xs">Download & Run Installer</h4>
+                <p className="text-[11px] text-slate-600">
+                  Click the button above to download <code className="bg-slate-200 px-1 py-0.5 rounded font-mono text-slate-800">PlannestPOS-Setup.exe</code> and double-click to open.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="w-6 h-6 rounded-full bg-[#00478c] text-white font-bold text-xs flex items-center justify-center mb-2">2</span>
-                <h4 className="font-bold text-slate-900 text-xs">Run launch.bat</h4>
-                <p className="text-[11px] text-slate-600 mt-1">
-                  Double-click <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-800 font-mono">launch.bat</code> to start the offline SQLite engine.
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <span className="w-6 h-6 rounded-full bg-[#00478c] text-white font-bold text-xs flex items-center justify-center">2</span>
+                <h4 className="font-bold text-slate-900 text-xs">Enter License Key</h4>
+                <p className="text-[11px] text-slate-600">
+                  Choose your target directory and enter your License Key (received via email or copied below).
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="w-6 h-6 rounded-full bg-[#00478c] text-white font-bold text-xs flex items-center justify-center mb-2">3</span>
-                <h4 className="font-bold text-slate-900 text-xs">Instant Checkout</h4>
-                <p className="text-[11px] text-slate-600 mt-1">
-                  Opens <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-800 font-mono">http://localhost:3000</code> in your browser ready for barcode scanning.
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                <span className="w-6 h-6 rounded-full bg-[#00478c] text-white font-bold text-xs flex items-center justify-center">3</span>
+                <h4 className="font-bold text-slate-900 text-xs">Auto MAC Lock & Shortcut</h4>
+                <p className="text-[11px] text-slate-600">
+                  Binds your computer's MAC address in our database, puts a Desktop Icon on your PC, and launches checkout!
                 </p>
               </div>
             </div>
