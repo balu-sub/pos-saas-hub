@@ -34,7 +34,12 @@ import {
   Phone,
   Copy,
   Send,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
+  PowerOff,
+  Unlock,
+  RotateCcw,
+  XCircle
 } from 'lucide-react';
 
 export default function SaasAdminCockpit({ onLogout }) {
@@ -189,6 +194,150 @@ Need support? Reply to this email or contact Plannest Support.`;
       await fetchData();
     } catch (err) {
       alert('Failed to issue license: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Deactivate store, revoke active license, and reset to Pending for fresh licensing
+  const handleDeactivateStore = async (st) => {
+    const confirmDeact = window.confirm(
+      `Deactivate store "${st.name}" (${st.id})?\n\n` +
+      `This will:\n` +
+      `1. Move the store back to "Pending License Requests".\n` +
+      `2. Revoke active license keys & unlock hardware MAC bindings.\n` +
+      `3. Allow you to issue a fresh license so the customer can install cleanly from scratch.\n\n` +
+      `Proceed with deactivation?`
+    );
+    if (!confirmDeact) return;
+
+    setLoading(true);
+    try {
+      // 1. Mark existing active licenses as revoked
+      const { error: licErr } = await supabase
+        .from('saas_licenses')
+        .update({
+          status: 'revoked',
+          hardware_uuid: null,
+        })
+        .eq('user_id', st.id);
+
+      if (licErr) {
+        console.warn('Notice when revoking license:', licErr);
+      }
+
+      // 2. Update store in stores table: is_active = false, registration_status = 'pending_license'
+      const updatedConfig = {
+        ...(st.bill_config || {}),
+        registration_status: 'pending_license',
+        deactivated_at: new Date().toISOString(),
+        previous_license_key: st.bill_config?.issued_license_key || null,
+        issued_license_key: null,
+        machine_id: null,
+      };
+
+      const { error: storeErr } = await supabase
+        .from('stores')
+        .update({
+          is_active: false,
+          bill_config: updatedConfig,
+        })
+        .eq('id', st.id);
+
+      if (storeErr) throw storeErr;
+
+      await fetchData();
+      alert(`Store "${st.name}" (${st.id}) has been deactivated and moved to Pending Requests. You can now issue a new license when ready.`);
+    } catch (err) {
+      alert('Failed to deactivate store: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Permanently delete a store and associated licenses
+  const handleDeleteStore = async (st) => {
+    const confirmDel = window.confirm(
+      `Are you sure you want to PERMANENTLY DELETE "${st.name}" (${st.id})?\n\n` +
+      `This removes the store and all licenses completely from the system.\n` +
+      `The customer will be able to register again from the beginning.\n\n` +
+      `This action cannot be undone.`
+    );
+    if (!confirmDel) return;
+
+    setLoading(true);
+    try {
+      await supabase.from('saas_licenses').delete().eq('user_id', st.id);
+      const { error: storeErr } = await supabase.from('stores').delete().eq('id', st.id);
+      if (storeErr) throw storeErr;
+
+      await fetchData();
+      alert(`Store "${st.name}" (${st.id}) has been permanently deleted.`);
+    } catch (err) {
+      alert('Failed to delete store: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Release MAC Hardware Lock on a specific license
+  const handleReleaseMacLock = async (lic) => {
+    const confirmRelease = window.confirm(
+      `Release MAC lock on license key:\n${lic.license_key} (${lic.user_id})?\n\n` +
+      `The next machine running PlannestPOS-Setup.exe with this key will claim and bind it automatically.`
+    );
+    if (!confirmRelease) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('saas_licenses')
+        .update({ hardware_uuid: null })
+        .eq('id', lic.id);
+
+      if (error) throw error;
+      await fetchData();
+      alert(`MAC address unlocked for license ${lic.license_key}. It can now be bound to a new machine.`);
+    } catch (err) {
+      alert('Failed to release MAC lock: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Revoke a specific license
+  const handleRevokeLicense = async (lic) => {
+    if (!window.confirm(`Revoke license key ${lic.license_key}?`)) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('saas_licenses')
+        .update({ status: 'revoked' })
+        .eq('id', lic.id);
+
+      if (error) throw error;
+      await fetchData();
+    } catch (err) {
+      alert('Failed to revoke license: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete a specific license
+  const handleDeleteLicense = async (lic) => {
+    if (!window.confirm(`Permanently delete license ${lic.license_key}?`)) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('saas_licenses')
+        .delete()
+        .eq('id', lic.id);
+
+      if (error) throw error;
+      await fetchData();
+    } catch (err) {
+      alert('Failed to delete license: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -551,18 +700,34 @@ Need support? Reply to this email or contact Plannest Support.`;
                     </div>
 
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] text-amber-700 font-semibold">
-                        Awaiting License Key
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-semibold text-amber-700">
+                          {st.bill_config?.deactivated_at
+                            ? 'Deactivated (Ready for New License)'
+                            : 'Awaiting License Key'}
+                        </span>
+                      </div>
 
-                      <button
-                        onClick={() => openLicenseReview(st)}
-                        disabled={loading}
-                        className="px-3.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Key className="w-3.5 h-3.5" />
-                        <span>Pick Machine ID &amp; Issue License</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => openLicenseReview(st)}
+                          disabled={loading}
+                          className="px-3.5 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Key className="w-3.5 h-3.5" />
+                          <span>Pick Machine ID &amp; Issue License</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStore(st)}
+                          disabled={loading}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                          title="Permanently Delete Request"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -685,7 +850,7 @@ Need support? Reply to this email or contact Plannest Support.`;
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-slate-100">
+                    <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
                       <a
                         href={portalUrl}
                         target="_blank"
@@ -699,6 +864,30 @@ Need support? Reply to this email or contact Plannest Support.`;
                         <span>Open Store Manager ({isEsp ? 'poslite' : 'pospro'})</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
+
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleDeactivateStore(st)}
+                          disabled={loading}
+                          className="flex-1 py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                          title="Deactivate store, revoke license, and move back to Pending so you can issue a fresh license"
+                        >
+                          <PowerOff className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Deactivate &amp; Reset</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStore(st)}
+                          disabled={loading}
+                          className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                          title="Permanently delete store from database"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -830,35 +1019,97 @@ Need support? Reply to this email or contact Plannest Support.`;
                       <th className="px-5 py-3.5">Hardware Lock (MAC Address / UUID)</th>
                       <th className="px-5 py-3.5">Tier</th>
                       <th className="px-5 py-3.5">Expires</th>
-                      <th className="px-5 py-3.5 text-right">Binding Status</th>
+                      <th className="px-5 py-3.5">Binding Status</th>
+                      <th className="px-5 py-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {licenses.map((lic) => (
-                      <tr key={lic.id} className="hover:bg-slate-50 transition">
-                        <td className="px-5 py-4 font-mono font-bold text-slate-900">{lic.license_key}</td>
-                        <td className="px-5 py-4 font-semibold text-slate-700">{lic.user_id}</td>
-                        <td className="px-5 py-4 font-mono text-[11px] text-slate-600">
-                          {lic.hardware_uuid ? (
-                            <span className="font-bold text-slate-800">{lic.hardware_uuid}</span>
-                          ) : (
-                            <span className="text-amber-600 italic">Unbound (Claims first machine on launch)</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className="uppercase text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                            {lic.plan_tier}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-slate-500 font-mono">{lic.expires_at}</td>
-                        <td className="px-5 py-4 text-right">
-                          <span className="text-emerald-600 font-semibold flex items-center justify-end gap-1">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            {lic.hardware_uuid ? 'Locked to MAC' : 'Active'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {licenses.map((lic) => {
+                      const isRevoked = lic.status === 'revoked';
+                      const isLocked = Boolean(lic.hardware_uuid);
+
+                      return (
+                        <tr key={lic.id} className="hover:bg-slate-50 transition">
+                          <td className="px-5 py-4 font-mono font-bold text-slate-900">
+                            <span className={isRevoked ? 'line-through text-slate-400' : ''}>
+                              {lic.license_key}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 font-semibold text-slate-700">{lic.user_id}</td>
+                          <td className="px-5 py-4 font-mono text-[11px] text-slate-600">
+                            {lic.hardware_uuid ? (
+                              <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                                {lic.hardware_uuid}
+                              </span>
+                            ) : (
+                              <span className="text-amber-600 italic">Unbound (Claims first machine on launch)</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="uppercase text-[10px] font-extrabold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                              {lic.plan_tier}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-slate-500 font-mono">{lic.expires_at}</td>
+                          <td className="px-5 py-4">
+                            {isRevoked ? (
+                              <span className="text-rose-600 font-semibold flex items-center gap-1 text-[11px]">
+                                <XCircle className="w-3.5 h-3.5" />
+                                Revoked
+                              </span>
+                            ) : isLocked ? (
+                              <span className="text-emerald-600 font-semibold flex items-center gap-1 text-[11px]">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                Locked to MAC
+                              </span>
+                            ) : (
+                              <span className="text-amber-600 font-semibold flex items-center gap-1 text-[11px]">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Active (Unbound)
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {isLocked && !isRevoked && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleReleaseMacLock(lic)}
+                                  disabled={loading}
+                                  className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
+                                  title="Release MAC binding so customer can install on a new computer"
+                                >
+                                  <Unlock className="w-3 h-3 text-amber-600" />
+                                  <span>Unlock MAC</span>
+                                </button>
+                              )}
+
+                              {!isRevoked && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevokeLicense(lic)}
+                                  disabled={loading}
+                                  className="p-1.5 text-slate-400 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition cursor-pointer"
+                                  title="Revoke License Key"
+                                >
+                                  <PowerOff className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteLicense(lic)}
+                                disabled={loading}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                title="Delete License Permanently"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

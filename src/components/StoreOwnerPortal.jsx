@@ -47,25 +47,7 @@ export default function StoreOwnerPortal({ session, onLogout }) {
       if (!error && data) {
         setLicense(data);
       } else {
-        // Create an initial license for this store if none exists
-        const randomKey = `PLN-${isWindows ? 'WIN' : 'ESP'}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-2026`;
-        const expDate = new Date();
-        expDate.setFullYear(expDate.getFullYear() + 1);
-
-        const newLic = {
-          id: `LIC-${Date.now()}`,
-          user_id: storeId,
-          license_key: randomKey,
-          token: btoa(`${randomKey}:${storeId}`),
-          plan_tier: isWindows ? 'pro' : 'lite',
-          status: 'active',
-          hardware_uuid: isWindows ? 'UUID-WIN11-74B2-9901' : 'ESP32-S3-MAC-24:6F:28',
-          expires_at: expDate.toISOString().split('T')[0],
-          created_at: new Date().toISOString(),
-        };
-
-        await supabase.from('saas_licenses').insert([newLic]);
-        setLicense(newLic);
+        setLicense(null);
       }
     } catch (err) {
       console.error('License fetch error:', err);
@@ -281,7 +263,7 @@ export default function StoreOwnerPortal({ session, onLogout }) {
             </button>
           </div>
 
-          {license && (
+          {license && license.status !== 'revoked' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left: License Key Card */}
               <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
@@ -309,7 +291,7 @@ export default function StoreOwnerPortal({ session, onLogout }) {
                   <span className="text-xs font-bold text-slate-500 uppercase">Hardware Binding (MAC / UUID)</span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3" />
-                    Locked to Device
+                    {license.hardware_uuid ? 'Locked to Device' : 'Ready to Bind'}
                   </span>
                 </div>
 
@@ -325,15 +307,27 @@ export default function StoreOwnerPortal({ session, onLogout }) {
                     Single-Terminal Protection Active
                   </span>
 
-                  <button
-                    onClick={handleResetHardwareLock}
-                    disabled={loading}
-                    className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline"
-                  >
-                    Reset Hardware Binding
-                  </button>
+                  {license.hardware_uuid && (
+                    <button
+                      onClick={handleResetHardwareLock}
+                      disabled={loading}
+                      className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline cursor-pointer"
+                    >
+                      Reset Hardware Binding
+                    </button>
+                  )}
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="p-6 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-sm">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>License Pending or Under Reset</span>
+              </div>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                Your store license is currently pending assignment or was reset by the administrator. Please check your email or contact Plannest Support to receive your fresh terminal license key.
+              </p>
             </div>
           )}
 
