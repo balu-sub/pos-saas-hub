@@ -1,7 +1,7 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Removed obsolete MySQL database tab.\n2. Restored Cash & UPI navigation.\n3. Scale baud rate & live stream and Receipt Printer settings prominently displayed in Peripherals.\n4. Tare button removed from scale readout.\n5. AI Camera, Voice, and Drawer greyed out as paused.",
+  "releaseNotes": "1. Cloud Store & Catalog Sync: Automatically matches store identity (e.g. Manikandan shop STORE-985) and cloud catalog.\n2. Fixed Peripherals configuration click-to-configure and smooth scroll.\n3. Added direct 'Configure Hardware & Baud' trigger in bottom status bar.\n4. Headless background server with clean native app window (no address bar or localhost).",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-05"
 }
