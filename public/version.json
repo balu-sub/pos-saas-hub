@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. RS-232 weighing scale baud rate setup & live WebSerial stream.\n2. Automatic live weight reception in active cart for produce items.\n3. Installed Windows printers selection for receipt routing.\n4. Tare button removed from scale readout (physical scale tare preserved).\n5. AI Vision Camera, AI Voice, and Cash Drawer paused / greyed out.",
+  "releaseNotes": "1. Removed obsolete MySQL database tab.\n2. Restored Cash & UPI navigation.\n3. Scale baud rate & live stream and Receipt Printer settings prominently displayed in Peripherals.\n4. Tare button removed from scale readout.\n5. AI Camera, Voice, and Drawer greyed out as paused.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-05"
 }
