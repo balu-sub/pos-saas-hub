@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "Retail Counter POS billing engine with offline SQLite storage, barcode scanner support, and Cloud Sync.",
+  "releaseNotes": "1. RS-232 weighing scale baud rate setup & live WebSerial stream.\n2. Automatic live weight reception in active cart for produce items.\n3. Installed Windows printers selection for receipt routing.\n4. Tare button removed from scale readout (physical scale tare preserved).\n5. AI Vision Camera, AI Voice, and Cash Drawer paused / greyed out.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
-  "publishedAt": "2026-11-04"
+  "publishedAt": "2026-11-05"
 }
