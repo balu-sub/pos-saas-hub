@@ -1,7 +1,7 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Cloud Store & Catalog Sync: Automatically matches store identity (e.g. Manikandan shop STORE-985) and cloud catalog.\n2. Fixed Peripherals configuration click-to-configure and smooth scroll.\n3. Added direct 'Configure Hardware & Baud' trigger in bottom status bar.\n4. Headless background server with clean native app window (no address bar or localhost).",
+  "releaseNotes": "1. Professional Guided Installer: Live 7-step visual checklist with progress bars, eliminating silent installs and premature browser launch.\n2. Native Desktop POS Window: Runs completely headless without terminal windows, localhost URLs, or browser address bars.\n3. Automatic Two-Way Cloud Sync: Instant live syncing between Cloud Manager (pospro.plannestapp.com) and local POS terminal.\n4. Hardware Setup: RS-232 Digital Scale with baud configuration & auto-read to cart, and Windows installed receipt printer selector.\n5. Complete Store Data Isolation: Fixed shop identity and separate catalog per store.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-05"
 }
