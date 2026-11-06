@@ -1,7 +1,7 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Restored Hardware & Peripherals Settings: Full configuration controls for RS-232 Digital Scale (Baud rate, COM port, live streaming readout), Receipt Printer driver selector, and Barcode Scanner.\n2. Streamlined Printer Setup: Installed Windows printer driver selection with one-click refresh.\n3. Header Minimalist Display: Only Digital Scale live weight displayed in top header.\n4. Robust In-App Update Relaunch: Detached background script safely replaces files and restarts Plannest POS without white screen hangs.",
+  "releaseNotes": "1. Fixed Infinite Reload Loop & Blank Screen: Relocated private browser profile to Windows LocalAppData and added comprehensive watcher ignore rules to eliminate Edge CacheStorage reload loop.\n2. Service Worker Dev Mode Disabled: Prevented local ServiceWorker from writing redundant cache files to disk.\n3. Robust Browser Relaunch on Update: Added graceful termination for running POS windows before applying files to prevent hanging blank states.\n4. Defensively formatted live Scale weight readout in header.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-06"
 }
