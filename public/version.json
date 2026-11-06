@@ -1,7 +1,7 @@
 {
-  "version": "1.0.9",
+  "version": "1.1.0",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Replaced Mandi Price Trends with Product Profitability & Gross Margin Report: Real-time purchase cost vs retail selling price analysis, unit margins, markup percentages, and total realizable stock profit.\n2. Clean PDF & CSV Export: Download complete product profit and gross margin audits with inventory valuations.\n3. Defensively formatted margin KPIs and multi-language support (English, Tamil, Hindi).",
+  "releaseNotes": "1. Highlighted Inventory Action Toolbar: Styled with prominent slate/blue bar, streamlined search and category selector, and fixed Deals (6) button wrapping.\n2. Fast Cashier 'Hide Photos' Mode: Main POS register toggle for experienced cashiers to ring up sales in high-density text & SKU mode.\n3. Universal Period Selector in Store Analytics: Global period filter (Today, Yesterday, Last 7D, Last 30D, Month) now applies across all sales, category, item-wise velocity, and profit reports.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-06"
 }
