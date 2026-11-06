@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Highlighted Inventory Action Toolbar: Styled with prominent slate/blue bar, streamlined search and category selector, and fixed Deals (6) button wrapping.\n2. Fast Cashier 'Hide Photos' Mode: Main POS register toggle for experienced cashiers to ring up sales in high-density text & SKU mode.\n3. Universal Period Selector in Store Analytics: Global period filter (Today, Yesterday, Last 7D, Last 30D, Month) now applies across all sales, category, item-wise velocity, and profit reports.",
+  "releaseNotes": "1. Dual Independent POS Printers: Dedicated selection & test print for Receipt/Customer Bill Printer (Thermal 80mm/58mm) and Barcode/Label Sticker Printer (TSC, Zebra, TVS, Citizen).\n2. Vector SVG Barcode Printing & Instant PDF: Replaced CSS div lines with high-definition vector SVG rects that never disappear in browser print preview or PDF export; added direct Download Barcode PDF button.\n3. Compact Catalog 'Hide Photos' Mode: Clean toggle in Admin Hub Catalog & Stock toolbar to review items in ultra-fast compact table mode.\n4. Clean Product Form & Direct Scanner Autofill: Removed preset image pickers and standalone scan buttons; physical USB barcode scanners automatically populate numbers on focus without layout disruption.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-06"
 }
