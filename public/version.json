@@ -1,7 +1,7 @@
 {
-  "version": "1.1.1",
+  "version": "1.1.2",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Dual Independent POS Printers: Dedicated selection & test print for Receipt/Customer Bill Printer (Thermal 80mm/58mm) and Barcode/Label Sticker Printer (TSC, Zebra, TVS, Citizen).\n2. Vector SVG Barcode Printing & Instant PDF: Replaced CSS div lines with high-definition vector SVG rects that never disappear in browser print preview or PDF export; added direct Download Barcode PDF button.\n3. Compact Catalog 'Hide Photos' Mode: Clean toggle in Admin Hub Catalog & Stock toolbar to review items in ultra-fast compact table mode.\n4. Clean Product Form & Direct Scanner Autofill: Removed preset image pickers and standalone scan buttons; physical USB barcode scanners automatically populate numbers on focus without layout disruption.",
+  "releaseNotes": "1. Balanced Full-Width Inventory Toolbar: Redesigned with dynamic flex expansion across Line 1 (Search stretches full-width to Action buttons, eliminating trailing gaps) and well-balanced Line 2 (Count + Status Pills + Deals Filter on left, Deals Manager + Cashier Photos Toggle on right).\n2. Centralized Cashier Photos Control: 'Hide Photos in Billing Screen' toggle in Admin Hub controls the cashier register screen (uncluttered, fast SKU/text mode for cashiers), while keeping catalog images visible in Admin Hub.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-06"
 }
