@@ -1,7 +1,7 @@
 {
-  "version": "1.0.8",
+  "version": "1.0.9",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Fixed Infinite Reload Loop & Blank Screen: Relocated private browser profile to Windows LocalAppData and added comprehensive watcher ignore rules to eliminate Edge CacheStorage reload loop.\n2. Service Worker Dev Mode Disabled: Prevented local ServiceWorker from writing redundant cache files to disk.\n3. Robust Browser Relaunch on Update: Added graceful termination for running POS windows before applying files to prevent hanging blank states.\n4. Defensively formatted live Scale weight readout in header.",
+  "releaseNotes": "1. Replaced Mandi Price Trends with Product Profitability & Gross Margin Report: Real-time purchase cost vs retail selling price analysis, unit margins, markup percentages, and total realizable stock profit.\n2. Clean PDF & CSV Export: Download complete product profit and gross margin audits with inventory valuations.\n3. Defensively formatted margin KPIs and multi-language support (English, Tamil, Hindi).",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-06"
 }
