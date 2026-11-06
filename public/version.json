@@ -1,7 +1,7 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.6",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Continuous Refresh Fixed: Fixed launcher window watchdog to support Chromium Aura architecture, preventing server termination and continuous reload loops.\n2. Cloud & Local Image Library: Integrated Cloudinary product gallery with automatic local disk downloading and database persistence.\n3. Two-Way Catalog Sync: Manual Sync with Cloud button in catalogue toolbar with latest timestamp (updated_at) conflict resolution on both sides.\n4. Active/Inactive Product Status: Status toggle column and filters; inactive products automatically excluded from cashier billing view.\n5. Standard Retail Barcode Scanning: Global keyboard wedge scanning directly adds scanned items to cart from any screen.\n6. Live Digital Scale Auto-Weight: Automatic real-time weight sync from digital scale COM port to produce cart lines.",
+  "releaseNotes": "1. Admin Hub Layout Fix: Resolved activeCount reference error when opening Catalogue.\n2. Streamlined Printer Setup: Retained direct installed printer driver selector; removed redundant layout parameters.\n3. Header Minimalist Peripherals: Top header now displays exclusively the Digital Scale live weight stream.\n4. Cloudflare CDN Stale-Cache Prevention: Instant delivery of new packages without edge caching.\n5. Automated In-App Detached Update Relaunch: Seamlessly replaces files and restarts Plannest POS without white screen hangs.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
-  "publishedAt": "2026-11-05"
+  "publishedAt": "2026-11-06"
 }
