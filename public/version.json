@@ -1,7 +1,7 @@
 {
-  "version": "1.1.3",
+  "version": "1.1.4",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Silent Direct 80mm Printing: Configured Chromium kiosk printing and automated Windows default printer synchronization for instant silent receipts without popup preview dialogs.\n2. Perfect Continuous Thermal Layout: 0mm top margin eliminating blank paper waste, unclipped full invoice print (Store header, itemized table, taxes, grand total, payment tenders, footer & feed spacing).\n3. Clean Font & Aligned Receipt Columns: Fixed-table column layout preventing Rate/Amount collision, crisp typography matching Admin Hub live preview.",
+  "releaseNotes": "1. Store Registration Identity Prepopulation: Restored 'Amma Appa Kadai' across Top Header bar, Store Identity settings, and Live Bill Preview.\n2. Unified Monospace Receipt Layout: Bill preview and physical thermal print now 100% match the Admin Hub Live Preview design (ITEM, QTY, RATE, AMT columns, font-mono typography, and clean subtotal breakdown).",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-07"
 }
