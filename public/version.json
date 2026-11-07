@@ -1,7 +1,7 @@
 {
-  "version": "1.1.6",
+  "version": "1.1.7",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Canonical Single ThermalReceiptTicket Component: Shared 100% across Admin Hub Live Preview, POS Register Checkout, Duplicate Receipt reprint, and Self-Service Customer Kiosk with token banner.\n2. Outlet Profile Data Persistence: Fixed server-side partial update wipe bug and synchronized PostgreSQL/SQLite tax registrations (GSTIN, PAN, FSSAI) and branch name on prints.\n3. Currency & Alignment Fix: Cleaned currency symbols and spacing to eliminate double-dot artifacts ('Rs..') and adjusted ITEM, QTY, RATE, AMT column widths for 80mm continuous thermal rolls.",
+  "releaseNotes": "1. Updated brand branding with revised tagline 'Powering Business Efficiency' across launcher splash screen and application header.\n2. Removed 'View Last Receipt' button in self-service Kiosk mode to ensure customer privacy.\n3. Synchronized client and remote runtime version parity to resolve persistent update indicator.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-07"
 }
