@@ -1,7 +1,7 @@
 {
-  "version": "1.1.4",
+  "version": "1.1.5",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Store Registration Identity Prepopulation: Restored 'Amma Appa Kadai' across Top Header bar, Store Identity settings, and Live Bill Preview.\n2. Unified Monospace Receipt Layout: Bill preview and physical thermal print now 100% match the Admin Hub Live Preview design (ITEM, QTY, RATE, AMT columns, font-mono typography, and clean subtotal breakdown).",
+  "releaseNotes": "1. Print-on-Bill Field Selection Checkboxes: Added 'Print on Bill' checkboxes for Branch, Physical Address, Phone, Email, GSTIN, PAN, FSSAI, Tagline, and Return Terms in Admin Hub. Unchecked items are excluded from print.\n2. Unified Receipt Architecture: Both the Admin Hub Live Preview and the POS Checkout Receipt now use the EXACT SAME ThermalReceiptTicket component, ensuring 100% visual parity across preview and print.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-07"
 }
