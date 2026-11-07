@@ -1,7 +1,7 @@
 {
-  "version": "1.1.5",
+  "version": "1.1.6",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Print-on-Bill Field Selection Checkboxes: Added 'Print on Bill' checkboxes for Branch, Physical Address, Phone, Email, GSTIN, PAN, FSSAI, Tagline, and Return Terms in Admin Hub. Unchecked items are excluded from print.\n2. Unified Receipt Architecture: Both the Admin Hub Live Preview and the POS Checkout Receipt now use the EXACT SAME ThermalReceiptTicket component, ensuring 100% visual parity across preview and print.",
+  "releaseNotes": "1. Canonical Single ThermalReceiptTicket Component: Shared 100% across Admin Hub Live Preview, POS Register Checkout, Duplicate Receipt reprint, and Self-Service Customer Kiosk with token banner.\n2. Outlet Profile Data Persistence: Fixed server-side partial update wipe bug and synchronized PostgreSQL/SQLite tax registrations (GSTIN, PAN, FSSAI) and branch name on prints.\n3. Currency & Alignment Fix: Cleaned currency symbols and spacing to eliminate double-dot artifacts ('Rs..') and adjusted ITEM, QTY, RATE, AMT column widths for 80mm continuous thermal rolls.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-07"
 }
