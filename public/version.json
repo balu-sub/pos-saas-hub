@@ -1,7 +1,7 @@
 {
-  "version": "1.1.8",
+  "version": "1.1.9",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Streamlined Top Navigation: Cleaned user dropdown by removing redundant PIN and Lock/Exit actions now centralized on the side navigation bar.\n2. Startup Session & Lock Persistence: Closing the application without Lock & Exit now seamlessly remembers the last operator; triggering Lock & Exit strictly mandates PIN authentication on next launch.\n3. Custom Units of Measurement: Added dynamic custom unit provisioning with '+ New' and inline creation for catalog items.",
+  "releaseNotes": "1. Brand-Agnostic Generic Prefixes: Completely replaced all legacy alfa references with future-proof generic pos_ keys.\n2. Genuine Hardware Detection: Footer peripherals status now accurately verifies physical devices (RETSOL thermal printer, Web Serial weighing scale, HID scanner) with live diagnostics.\n3. Strictly Real Data: Purged all synthetic fallbacks, dummy hourly multipliers, and auto-seeded sample POs/customers.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
   "publishedAt": "2026-11-07"
 }
