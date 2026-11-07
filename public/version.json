@@ -1,7 +1,7 @@
 {
-  "version": "1.1.2",
+  "version": "1.1.3",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Balanced Full-Width Inventory Toolbar: Redesigned with dynamic flex expansion across Line 1 (Search stretches full-width to Action buttons, eliminating trailing gaps) and well-balanced Line 2 (Count + Status Pills + Deals Filter on left, Deals Manager + Cashier Photos Toggle on right).\n2. Centralized Cashier Photos Control: 'Hide Photos in Billing Screen' toggle in Admin Hub controls the cashier register screen (uncluttered, fast SKU/text mode for cashiers), while keeping catalog images visible in Admin Hub.",
+  "releaseNotes": "1. Silent Direct 80mm Printing: Configured Chromium kiosk printing and automated Windows default printer synchronization for instant silent receipts without popup preview dialogs.\n2. Perfect Continuous Thermal Layout: 0mm top margin eliminating blank paper waste, unclipped full invoice print (Store header, itemized table, taxes, grand total, payment tenders, footer & feed spacing).\n3. Clean Font & Aligned Receipt Columns: Fixed-table column layout preventing Rate/Amount collision, crisp typography matching Admin Hub live preview.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
-  "publishedAt": "2026-11-06"
+  "publishedAt": "2026-11-07"
 }
