@@ -87,6 +87,31 @@ export default function SaasAdminCockpit({ onLogout }) {
   // Review & Issue License modal for a pending store
   const [reviewingStore, setReviewingStore] = useState(null);
 
+  // Free Demo Follow-up State
+  const [demoStatusFilter, setDemoStatusFilter] = useState('all');
+  const [editingNotes, setEditingNotes] = useState({});
+
+  const handleUpdateLead = async (inqId, newStatus, newNotes) => {
+    try {
+      const targetInq = stores.find((s) => s.id === inqId);
+      if (!targetInq) return;
+      const updatedConfig = {
+        ...(targetInq.bill_config || {}),
+        lead_status: newStatus !== undefined ? newStatus : (targetInq.bill_config?.lead_status || 'new'),
+        follow_up_notes: newNotes !== undefined ? newNotes : (targetInq.bill_config?.follow_up_notes || ''),
+        last_followed_up_at: new Date().toISOString(),
+      };
+      const { error } = await supabase
+        .from('stores')
+        .update({ bill_config: updatedConfig })
+        .eq('id', inqId);
+      if (error) throw error;
+      await fetchData();
+    } catch (err) {
+      alert('Failed to update follow-up: ' + err.message);
+    }
+  };
+
   const [pingStatus, setPingStatus] = useState({});
 
   const generateLicenseKey = (apptype) => {
@@ -455,12 +480,26 @@ Need support? Reply to this email or contact Plannest Support.`;
     fetchData();
   }, []);
 
-  // Separate pending registration requests vs active stores
-  const pendingRequests = stores.filter(
-    (st) => !st.is_active || st.bill_config?.registration_status === 'pending_license'
+  // 1. Free Demo & Pricing Requests from landing page
+  const inquiries = stores.filter(
+    (st) => st.apptype === 'pricing_inquiry' || st.bill_config?.source?.includes('landing')
   );
+
+  // 2. Pending Store Registrations from buying customers who signed up
+  const pendingRequests = stores.filter(
+    (st) =>
+      (!st.is_active || st.bill_config?.registration_status === 'pending_license') &&
+      st.apptype !== 'pricing_inquiry' &&
+      !st.bill_config?.source?.includes('landing')
+  );
+
+  // 3. Active Stores
   const activeStores = stores.filter(
-    (st) => st.is_active && st.bill_config?.registration_status !== 'pending_license'
+    (st) =>
+      st.is_active &&
+      st.bill_config?.registration_status !== 'pending_license' &&
+      st.apptype !== 'pricing_inquiry' &&
+      !st.bill_config?.source?.includes('landing')
   );
 
 
@@ -655,6 +694,23 @@ Need support? Reply to this email or contact Plannest Support.`;
             </button>
 
             <button
+              onClick={() => setActiveTab('inquiries')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition ${
+                activeTab === 'inquiries'
+                  ? 'bg-purple-50 text-purple-800 border border-purple-200 font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Free Demo Requests ({inquiries.length})</span>
+              {inquiries.length > 0 && (
+                <span className="px-1.5 py-0.2 bg-blue-600 text-white rounded-full text-[10px] font-mono font-bold animate-pulse">
+                  {inquiries.length}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => setActiveTab('fleet')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition ${
                 activeTab === 'fleet'
@@ -813,6 +869,33 @@ Need support? Reply to this email or contact Plannest Support.`;
         {/* TAB 1: ACTIVE STORES */}
         {activeTab === 'stores' && (
           <div className="space-y-6">
+            {inquiries.length > 0 && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-extrabold text-blue-950 flex items-center gap-2">
+                      <span>{inquiries.length} Free Demo &amp; Pricing Requests Received</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800 font-mono font-bold">
+                        LEADS
+                      </span>
+                    </h4>
+                    <p className="text-xs text-blue-800 mt-0.5">
+                      Prospective retailers requested demonstrations. Follow up and schedule live demos in the Free Demo Requests tab.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('inquiries')}
+                  className="px-4 py-2 rounded-xl bg-[#00478c] hover:bg-[#003870] text-white text-xs font-bold transition flex items-center gap-2 shadow-xs shrink-0 cursor-pointer"
+                >
+                  <span>Open Demo Requests ({inquiries.length})</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-black text-slate-900">Active Stores &amp; Outlets ({activeStores.length})</h2>
@@ -966,6 +1049,323 @@ Need support? Reply to this email or contact Plannest Support.`;
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: FREE DEMO REQUESTS & FOLLOW-UP CONSOLE */}
+        {activeTab === 'inquiries' && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-[#00478c]" />
+                  <span>Free Demo &amp; Trial Requests ({inquiries.length})</span>
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Prospective retail store inquiries submitted via pos.plannestapp.com. Follow up via WhatsApp, Phone, or Schedule a Trial.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search by store, person, phone, city..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl w-64 bg-white focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 outline-hidden"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Status Filter Pills */}
+            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-slate-500 uppercase text-[11px]">Follow-Up Stage:</span>
+                <button
+                  onClick={() => setDemoStatusFilter('all')}
+                  className={`px-3 py-1 rounded-lg font-semibold transition ${
+                    demoStatusFilter === 'all'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  All ({inquiries.length})
+                </button>
+                <button
+                  onClick={() => setDemoStatusFilter('new')}
+                  className={`px-3 py-1 rounded-lg font-semibold transition ${
+                    demoStatusFilter === 'new'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  }`}
+                >
+                  🆕 New ({inquiries.filter((i) => (i.bill_config?.lead_status || 'new') === 'new').length})
+                </button>
+                <button
+                  onClick={() => setDemoStatusFilter('scheduled')}
+                  className={`px-3 py-1 rounded-lg font-semibold transition ${
+                    demoStatusFilter === 'scheduled'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                  }`}
+                >
+                  📞 Contacted / Scheduled ({inquiries.filter((i) => i.bill_config?.lead_status === 'scheduled').length})
+                </button>
+                <button
+                  onClick={() => setDemoStatusFilter('completed')}
+                  className={`px-3 py-1 rounded-lg font-semibold transition ${
+                    demoStatusFilter === 'completed'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                  }`}
+                >
+                  💻 Demo Done ({inquiries.filter((i) => i.bill_config?.lead_status === 'completed').length})
+                </button>
+                <button
+                  onClick={() => setDemoStatusFilter('converted')}
+                  className={`px-3 py-1 rounded-lg font-semibold transition ${
+                    demoStatusFilter === 'converted'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  }`}
+                >
+                  ✅ Converted to Buy ({inquiries.filter((i) => i.bill_config?.lead_status === 'converted').length})
+                </button>
+              </div>
+
+              <span className="text-[11px] text-slate-400">
+                Sorted by most recent request
+              </span>
+            </div>
+
+            {/* Inquiries Table Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              {inquiries.length === 0 ? (
+                <div className="p-14 text-center text-slate-400 space-y-2">
+                  <FileText className="w-12 h-12 mx-auto text-slate-300" />
+                  <p className="font-bold text-sm text-slate-700">No Free Demo Requests logged</p>
+                  <p className="text-xs max-w-md mx-auto">
+                    When prospective retailers submit the "Tell Us About Your Store" demonstration form on pos.plannestapp.com, they will appear here for immediate follow-up.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="px-4 py-3.5">Ref &amp; Date</th>
+                        <th className="px-4 py-3.5">Store / Business Name</th>
+                        <th className="px-4 py-3.5">Contact Person</th>
+                        <th className="px-4 py-3.5">Contact &amp; WhatsApp</th>
+                        <th className="px-4 py-3.5">Location</th>
+                        <th className="px-4 py-3.5">Store Type &amp; Counters</th>
+                        <th className="px-4 py-3.5">Hardware Needed</th>
+                        <th className="px-4 py-3.5">Customer Notes</th>
+                        <th className="px-4 py-3.5">Follow-Up Stage &amp; Log</th>
+                        <th className="px-4 py-3.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {inquiries
+                        .filter((inq) => {
+                          const status = inq.bill_config?.lead_status || 'new';
+                          if (demoStatusFilter !== 'all' && status !== demoStatusFilter) return false;
+                          if (!searchQuery) return true;
+                          const q = searchQuery.toLowerCase();
+                          return (
+                            inq.name?.toLowerCase().includes(q) ||
+                            inq.id?.toLowerCase().includes(q) ||
+                            inq.phone?.toLowerCase().includes(q) ||
+                            inq.address_line1?.toLowerCase().includes(q) ||
+                            inq.bill_config?.contact_person?.toLowerCase().includes(q) ||
+                            inq.bill_config?.email?.toLowerCase().includes(q)
+                          );
+                        })
+                        .map((inq) => {
+                          const contactPerson = inq.bill_config?.contact_person || inq.bill_config?.owner_name || 'Owner';
+                          const email = inq.bill_config?.email || inq.bill_config?.owner_email || '';
+                          const city = inq.bill_config?.city || inq.address_line1 || 'India';
+                          const storeType = inq.bill_config?.store_type || 'Supermarket & Grocery';
+                          const counterCount = inq.bill_config?.counter_count || '1 Counter';
+                          const hardware = inq.bill_config?.hardware_requirements || 'Standard PC POS';
+                          const notes = inq.bill_config?.notes || '';
+                          const currentStatus = inq.bill_config?.lead_status || 'new';
+                          const followUpNotes = inq.bill_config?.follow_up_notes || '';
+                          const submittedDate = inq.bill_config?.submitted_at || inq.created_at;
+                          const formattedDate = submittedDate
+                            ? new Date(submittedDate).toLocaleString('en-IN', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })
+                            : 'Recent';
+
+                          // Clean phone for whatsapp
+                          const cleanDigits = (inq.phone || '').replace(/\D/g, '');
+                          const waPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
+                          const waLink = `https://wa.me/${waPhone}?text=${encodeURIComponent(
+                            `Hello ${contactPerson}, thank you for your demo request for ${inq.name} on Plannest Retail POS. We would like to schedule your free live demonstration!`
+                          )}`;
+
+                          return (
+                            <tr key={inq.id} className="hover:bg-slate-50/80 transition">
+                              <td className="px-4 py-3.5 align-top">
+                                <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 text-[10px] block w-fit">
+                                  {inq.id}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block mt-1">
+                                  {formattedDate}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top">
+                                <span className="font-bold text-slate-900 block text-xs">
+                                  {inq.name}
+                                </span>
+                                <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 inline-block mt-0.5">
+                                  Demo Request
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top">
+                                <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
+                                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span>{contactPerson}</span>
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top">
+                                <div className="space-y-1">
+                                  <div className="font-mono font-bold text-slate-900 flex items-center gap-1">
+                                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <a href={`tel:${inq.phone}`} className="hover:text-blue-600 hover:underline">
+                                      {inq.phone}
+                                    </a>
+                                  </div>
+                                  {waPhone && (
+                                    <a
+                                      href={waLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition"
+                                    >
+                                      <MessageSquare className="w-3 h-3 text-emerald-600" />
+                                      <span>WhatsApp</span>
+                                    </a>
+                                  )}
+                                  {email && (
+                                    <div>
+                                      <a
+                                        href={`mailto:${email}`}
+                                        className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-medium"
+                                      >
+                                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                                        <span className="truncate max-w-[140px]">{email}</span>
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top">
+                                <span className="text-slate-600 text-[11px] block">
+                                  📍 {city}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top">
+                                <span className="font-bold text-slate-800 block text-xs">
+                                  {storeType}
+                                </span>
+                                <span className="text-[10px] text-purple-700 font-semibold bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 inline-block mt-0.5">
+                                  {counterCount}
+                                </span>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top max-w-xs">
+                                <p className="text-[11px] text-slate-600 leading-snug">
+                                  {hardware}
+                                </p>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top max-w-xs">
+                                {notes ? (
+                                  <p className="text-[11px] text-slate-700 italic bg-slate-50 p-2 rounded-lg border border-slate-200/60">
+                                    "{notes}"
+                                  </p>
+                                ) : (
+                                  <span className="text-slate-400 italic text-[10px]">No specific notes</span>
+                                )}
+                              </td>
+
+                              {/* Follow-up Stage & Notes */}
+                              <td className="px-4 py-3.5 align-top w-56 space-y-2">
+                                <select
+                                  value={currentStatus}
+                                  onChange={(e) => handleUpdateLead(inq.id, e.target.value)}
+                                  className="w-full text-[11px] font-bold p-1.5 rounded-lg border border-slate-200 bg-white focus:ring-1 focus:ring-purple-600 outline-hidden"
+                                >
+                                  <option value="new">🆕 New Request</option>
+                                  <option value="scheduled">📞 Demo Scheduled</option>
+                                  <option value="completed">💻 Demo Completed</option>
+                                  <option value="converted">✅ Converted to Buy</option>
+                                  <option value="dropped">❌ Dropped / Not Interested</option>
+                                </select>
+
+                                <div className="space-y-1">
+                                  <input
+                                    type="text"
+                                    placeholder="Add follow-up note..."
+                                    value={editingNotes[inq.id] !== undefined ? editingNotes[inq.id] : followUpNotes}
+                                    onChange={(e) => setEditingNotes({ ...editingNotes, [inq.id]: e.target.value })}
+                                    className="w-full text-[11px] px-2 py-1 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white outline-hidden"
+                                  />
+                                  {editingNotes[inq.id] !== undefined && editingNotes[inq.id] !== followUpNotes && (
+                                    <button
+                                      onClick={() => {
+                                        handleUpdateLead(inq.id, undefined, editingNotes[inq.id]);
+                                        setEditingNotes((prev) => {
+                                          const copy = { ...prev };
+                                          delete copy[inq.id];
+                                          return copy;
+                                        });
+                                      }}
+                                      className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition cursor-pointer"
+                                    >
+                                      Save Note
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+
+                              <td className="px-4 py-3.5 align-top text-right space-y-1.5">
+                                <button
+                                  onClick={() => openLicenseReview(inq)}
+                                  className="w-full px-2.5 py-1.5 bg-[#00478c] hover:bg-[#003870] text-white rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                                  title="Convert to Customer Store and Issue License Key"
+                                >
+                                  <Key className="w-3 h-3" />
+                                  <span>Issue License</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteStore(inq)}
+                                  className="w-full px-2 py-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-[10px] font-semibold transition flex items-center justify-center gap-1 cursor-pointer"
+                                  title="Delete Lead"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  <span>Delete</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
