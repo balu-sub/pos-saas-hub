@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import {
+  ArrowRight,
+  MessageSquare,
+  FileText,
   Store,
   Layers,
   Radio,

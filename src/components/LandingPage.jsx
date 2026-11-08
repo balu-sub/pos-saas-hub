@@ -35,6 +35,7 @@ export default function LandingPage({ onOpenAuth }) {
   const [activeWorkflowTab, setActiveWorkflowTab] = useState('scan');
 
   // Contact for Pricing & Details Form State
+  const [submittedData, setSubmittedData] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '',
     businessName: '',
@@ -98,6 +99,11 @@ export default function LandingPage({ onOpenAuth }) {
       ]);
 
       if (error) throw error;
+      setSubmittedData({
+        ...formData,
+        inquiryId,
+        submittedAt: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+      });
       setSubmitSuccess(true);
     } catch (err) {
       setSubmitError(err.message || 'Failed to submit inquiry. Please try again.');
@@ -135,10 +141,13 @@ export default function LandingPage({ onOpenAuth }) {
               Sign In
             </button>
             <button
-              onClick={() => onOpenAuth('signup')}
-              className="px-4 py-2 text-xs font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-xs transition flex items-center gap-1.5"
+              onClick={() => {
+                const el = document.getElementById('contact-pricing');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-4 py-2 text-xs font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Sign Up</span>
+              <span>Ask for Demo</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -165,10 +174,13 @@ export default function LandingPage({ onOpenAuth }) {
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <button
-              onClick={() => onOpenAuth('signup')}
-              className="px-6 py-3.5 text-sm font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-md hover:shadow-lg transition flex items-center gap-2"
+              onClick={() => {
+                const el = document.getElementById('contact-pricing');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3.5 text-sm font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-md hover:shadow-lg transition flex items-center gap-2 cursor-pointer"
             >
-              <span>Get Started with Free Trial</span>
+              <span>Ask for Demonstration</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -284,21 +296,94 @@ export default function LandingPage({ onOpenAuth }) {
             <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#00478c] via-blue-600 to-indigo-600"></div>
 
-              {submitSuccess ? (
-                <div className="py-10 text-center space-y-4 animate-in fade-in zoom-in-95">
-                  <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
-                    <CheckCircle2 className="w-8 h-8" />
+              {submitSuccess && submittedData ? (
+                <div className="py-6 space-y-5 animate-in fade-in zoom-in-95">
+                  <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900">
+                    <CheckCircle className="w-8 h-8 text-emerald-600 shrink-0" />
+                    <div>
+                      <h3 className="text-base font-extrabold text-emerald-950">Demonstration Request Submitted!</h3>
+                      <p className="text-xs text-emerald-800">
+                        Thank you! We have logged your store specification. Our technical specialist will contact you with pricing and schedule your live trial.
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900">Quotation Request Received!</h3>
-                  <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                    Thank you, <strong className="text-slate-900">{formData.fullName}</strong>! We have registered your request for <strong className="text-slate-900">{formData.businessName}</strong>. 
-                    Our retail solution team will contact you at <span className="font-mono font-bold text-[#00478c]">{formData.phone}</span> shortly with complete pricing and system details.
-                  </p>
-                  <div className="pt-4">
+
+                  {/* Submitted Details Table */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                    <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 font-bold text-xs text-slate-800 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Building className="w-3.5 h-3.5 text-[#00478c]" />
+                        <span>Submitted Store Specification</span>
+                      </span>
+                      <span className="font-mono text-[11px] px-2 py-0.5 bg-blue-100 text-[#00478c] rounded font-bold">
+                        {submittedData.inquiryId}
+                      </span>
+                    </div>
+                    <table className="w-full text-xs divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100">
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600 w-1/3">Store / Business Name</td>
+                          <td className="px-3.5 py-2.5 font-bold text-slate-900">{submittedData.businessName}</td>
+                        </tr>
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Contact Person</td>
+                          <td className="px-3.5 py-2.5 font-medium text-slate-800">{submittedData.fullName}</td>
+                        </tr>
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Phone / WhatsApp</td>
+                          <td className="px-3.5 py-2.5 font-mono font-bold text-[#00478c]">{submittedData.phone}</td>
+                        </tr>
+                        {submittedData.email && (
+                          <tr className="divide-x divide-slate-100">
+                            <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Official Email</td>
+                            <td className="px-3.5 py-2.5 text-slate-700">{submittedData.email}</td>
+                          </tr>
+                        )}
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">City / Location</td>
+                          <td className="px-3.5 py-2.5 text-slate-700">{submittedData.city || 'India'}</td>
+                        </tr>
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Retail Store Type</td>
+                          <td className="px-3.5 py-2.5 text-slate-700">{submittedData.storeType}</td>
+                        </tr>
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Billing Counters</td>
+                          <td className="px-3.5 py-2.5 font-bold text-slate-800">{submittedData.counterCount}</td>
+                        </tr>
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Selected Hardware</td>
+                          <td className="px-3.5 py-2.5 text-slate-700">
+                            {submittedData.hardwareRequirements?.length > 0
+                              ? submittedData.hardwareRequirements.join(', ')
+                              : 'Standard PC POS'}
+                          </td>
+                        </tr>
+                        {submittedData.notes && (
+                          <tr className="divide-x divide-slate-100">
+                            <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Specific Notes</td>
+                            <td className="px-3.5 py-2.5 text-slate-700 italic">{submittedData.notes}</td>
+                          </tr>
+                        )}
+                        <tr className="divide-x divide-slate-100">
+                          <td className="px-3.5 py-2.5 bg-slate-50/70 font-semibold text-slate-600">Status</td>
+                          <td className="px-3.5 py-2.5">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              <Clock className="w-3 h-3" />
+                              <span>Queued for Demonstration</span>
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => {
                         setSubmitSuccess(false);
+                        setSubmittedData(null);
                         setFormData({
                           fullName: '',
                           businessName: '',
@@ -311,13 +396,13 @@ export default function LandingPage({ onOpenAuth }) {
                           notes: '',
                         });
                       }}
-                      className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+                      className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                     >
-                      Submit Another Inquiry
+                      Submit Another Store Inquiry
                     </button>
+                    <span className="text-[11px] text-slate-400">Ref: {submittedData.inquiryId}</span>
                   </div>
-                </div>
-              ) : (
+                </div>) : (
                 <form onSubmit={handleInquirySubmit} className="space-y-5">
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">Tell Us About Your Store</h3>
@@ -575,41 +660,77 @@ export default function LandingPage({ onOpenAuth }) {
                 </ul>
               </div>
 
-              {/* Direct Help / Instant Contact Card */}
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 sm:p-7 rounded-3xl shadow-md space-y-4">
-                <div className="flex items-center gap-2 text-blue-400 text-xs font-bold uppercase tracking-wider">
-                  <Phone className="w-4 h-4" />
-                  <span>Need Instant Answers?</span>
-                </div>
-                <h4 className="text-lg font-bold text-white">Speak with Our Retail Technical Specialists</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Call or chat with our team directly for urgent store setups, scale integrations, or multi-branch deployments.
-                </p>
-
-                <div className="space-y-2 pt-1 font-mono text-xs">
-                  <a
-                    href="tel:+919940630536"
-                    className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition font-bold"
-                  >
-                    <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>+91 99406 30536</span>
-                  </a>
-                  <a
-                    href="mailto:contact@plannestapp.com"
-                    className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition font-bold"
-                  >
-                    <Mail className="w-4 h-4 text-blue-400 shrink-0" />
-                    <span>contact@plannestapp.com</span>
-                  </a>
-                </div>
-
-                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Support Desk Active
+              {/* Hardware & Terminal Compatibility Matrix Table */}
+              <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                    <Laptop className="w-4 h-4 text-[#00478c]" />
+                    <span>Hardware Compatibility Matrix</span>
+                  </h4>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Plug &amp; Play Ready
                   </span>
-                  <span>9:00 AM – 9:00 PM IST</span>
                 </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-100">
+                  <table className="w-full text-[11px] text-left">
+                    <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="px-3 py-2">Terminal Type</th>
+                        <th className="px-3 py-2">Weighing Scale</th>
+                        <th className="px-3 py-2">Printer &amp; Scanner</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-600">
+                      <tr>
+                        <td className="px-3 py-2.5 font-bold text-slate-900">
+                          Windows Touch POS
+                          <span className="block text-[10px] text-slate-500 font-normal">Offline SQLite</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          RS232 Auto-Tare
+                          <span className="block text-[10px] text-emerald-600 font-semibold">Essae, Phoenix</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          80mm ESC/POS
+                          <span className="block text-[10px] text-slate-500 font-normal">2D QR &amp; Barcode</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2.5 font-bold text-slate-900">
+                          CrowPanel ESP32
+                          <span className="block text-[10px] text-slate-500 font-normal">7.0" Embedded</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          USB Scale Hub
+                          <span className="block text-[10px] text-slate-500 font-normal">Direct Weight Read</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          58mm Thermal
+                          <span className="block text-[10px] text-slate-500 font-normal">Instant Slip Print</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2.5 font-bold text-slate-900">
+                          Multi-Counter Chain
+                          <span className="block text-[10px] text-slate-500 font-normal">2 to 8+ Lanes</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          Multi-Lane Tare
+                          <span className="block text-[10px] text-slate-500 font-normal">Central Price Sync</span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          Kiosk &amp; Cash Drawer
+                          <span className="block text-[10px] text-slate-500 font-normal">RJ11 Auto Kickout</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Our engineers verify and configure your exact hardware brands before deployment so you can start billing immediately.
+                </p>
               </div>
             </div>
           </div>
