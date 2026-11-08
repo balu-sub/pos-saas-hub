@@ -141,13 +141,10 @@ export default function LandingPage({ onOpenAuth }) {
               Sign In
             </button>
             <button
-              onClick={() => {
-                const el = document.getElementById('contact-pricing');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="px-4 py-2 text-xs font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              onClick={() => onOpenAuth('signup')}
+              className="px-4 py-2 text-xs font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-xs transition flex items-center gap-1.5"
             >
-              <span>Ask for Demo</span>
+              <span>Sign Up</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
