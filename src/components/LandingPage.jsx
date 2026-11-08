@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../supabase';
 import {
   Laptop,
   Cpu,
@@ -17,11 +18,93 @@ import {
   Sparkles,
   Play,
   Layers,
-  Database
+  Database,
+  Phone,
+  Mail,
+  Send,
+  MessageSquare,
+  Building,
+  User,
+  MapPin,
+  Clock,
+  HelpCircle,
+  CheckCircle
 } from 'lucide-react';
 
 export default function LandingPage({ onOpenAuth }) {
   const [activeWorkflowTab, setActiveWorkflowTab] = useState('scan');
+
+  // Contact for Pricing & Details Form State
+  const [formData, setFormData] = useState({
+    fullName: '',
+    businessName: '',
+    phone: '',
+    email: '',
+    city: '',
+    storeType: 'Supermarket & Grocery',
+    counterCount: '1 Counter',
+    hardwareRequirements: ['Windows POS Terminal', '80mm Thermal Printer'],
+    notes: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const handleCheckboxToggle = (hw) => {
+    setFormData((prev) => {
+      const exists = prev.hardwareRequirements.includes(hw);
+      return {
+        ...prev,
+        hardwareRequirements: exists
+          ? prev.hardwareRequirements.filter((h) => h !== hw)
+          : [...prev.hardwareRequirements, hw],
+      };
+    });
+  };
+
+  const handleInquirySubmit = async (e) => {
+    e.preventDefault();
+    setSubmitError('');
+    setIsSubmitting(true);
+
+    try {
+      if (!formData.fullName.trim() || !formData.phone.trim() || !formData.businessName.trim()) {
+        throw new Error('Please fill in your name, store name, and contact phone number.');
+      }
+
+      const inquiryId = `INQ-${Date.now().toString().slice(-5)}`;
+      const { error } = await supabase.from('stores').insert([
+        {
+          id: inquiryId,
+          name: formData.businessName.trim(),
+          phone: formData.phone.trim(),
+          address_line1: formData.city.trim() || 'India',
+          apptype: 'pricing_inquiry',
+          bill_prefix: 'INQ',
+          starting_bill_no: 1,
+          is_active: false,
+          bill_config: {
+            contact_person: formData.fullName.trim(),
+            email: formData.email.trim(),
+            city: formData.city.trim(),
+            store_type: formData.storeType,
+            counter_count: formData.counterCount,
+            hardware_requirements: formData.hardwareRequirements.join(', '),
+            notes: formData.notes.trim(),
+            source: 'pos.plannestapp.com landing contact form',
+            requested_at: new Date().toISOString(),
+          },
+        },
+      ]);
+
+      if (error) throw error;
+      setSubmitSuccess(true);
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to submit inquiry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FDFDFE] text-[#0F172A] flex flex-col font-sans selection:bg-[#00478c] selection:text-white">
@@ -41,7 +124,7 @@ export default function LandingPage({ onOpenAuth }) {
             <a href="#platform" className="hover:text-[#00478c] transition">Platform</a>
             <a href="#workflow" className="hover:text-[#00478c] transition">Workflow</a>
             <a href="#peripherals" className="hover:text-[#00478c] transition">Peripherals</a>
-            <a href="#pricing" className="hover:text-[#00478c] transition">Pricing</a>
+            <a href="#contact-pricing" className="hover:text-[#00478c] transition">Pricing &amp; Quote</a>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -179,86 +262,355 @@ export default function LandingPage({ onOpenAuth }) {
         </div>
       </section>
 
-      {/* 4. Pricing Section */}
-      <section id="pricing" className="py-20 bg-slate-50">
+      {/* 4. Pricing & Details Contact Form Section */}
+      <section id="contact-pricing" className="py-20 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#00478c]">Straightforward Pricing</span>
-            <h2 className="text-3xl font-extrabold text-slate-900 mt-2">Transparent Plans for Independent Retailers</h2>
-            <p className="text-slate-600 text-sm mt-2">
-              Every plan includes offline billing capability, inventory management, and automatic cloud backup.
+            <span className="text-xs font-bold uppercase tracking-wider text-[#00478c] bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+              Custom Quote &amp; Demo
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">
+              Request Pricing &amp; System Details
+            </h2>
+            <p className="text-slate-600 text-sm mt-3 leading-relaxed">
+              Every retail store has unique counter, weighing scale, and multi-terminal requirements. 
+              Fill in your details below and our retail specialist will provide customized plan pricing, 
+              hardware compatibility notes, and an instant demonstration.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold text-slate-500 uppercase">Lite Embedded</span>
-                <h3 className="text-xl font-bold text-slate-900 mt-1">CrowPanel Hardware</h3>
-                <div className="mt-4 mb-6">
-                  <span className="text-3xl font-extrabold text-slate-900">₹499</span>
-                  <span className="text-xs text-slate-500"> / month / terminal</span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-6xl mx-auto items-start">
+            {/* Left: Contact & Price Request Form */}
+            <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#00478c] via-blue-600 to-indigo-600"></div>
+
+              {submitSuccess ? (
+                <div className="py-10 text-center space-y-4 animate-in fade-in zoom-in-95">
+                  <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900">Quotation Request Received!</h3>
+                  <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                    Thank you, <strong className="text-slate-900">{formData.fullName}</strong>! We have registered your request for <strong className="text-slate-900">{formData.businessName}</strong>. 
+                    Our retail solution team will contact you at <span className="font-mono font-bold text-[#00478c]">{formData.phone}</span> shortly with complete pricing and system details.
+                  </p>
+                  <div className="pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSubmitSuccess(false);
+                        setFormData({
+                          fullName: '',
+                          businessName: '',
+                          phone: '',
+                          email: '',
+                          city: '',
+                          storeType: 'Supermarket & Grocery',
+                          counterCount: '1 Counter',
+                          hardwareRequirements: ['Windows POS Terminal', '80mm Thermal Printer'],
+                          notes: '',
+                        });
+                      }}
+                      className="px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+                    >
+                      Submit Another Inquiry
+                    </button>
+                  </div>
                 </div>
-                <ul className="space-y-2.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> poslite.plannestapp.com access</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Direct Supabase cloud sync</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Firmware OTA updates</li>
-                </ul>
-              </div>
-              <button
-                onClick={() => onOpenAuth('signup')}
-                className="mt-8 w-full py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition"
-              >
-                Choose Lite
-              </button>
+              ) : (
+                <form onSubmit={handleInquirySubmit} className="space-y-5">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Tell Us About Your Store</h3>
+                    <p className="text-xs text-slate-500">We will tailor the pricing and terminal options specifically for your counter setup.</p>
+                  </div>
+
+                  {submitError && (
+                    <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-semibold">
+                      {submitError}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Your Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <User className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                        <input
+                          type="text"
+                          required
+                          value={formData.fullName}
+                          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                          placeholder="e.g. Ramesh Kumar"
+                          className="w-full pl-9 pr-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#00478c]/20 focus:border-[#00478c] outline-hidden"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Business / Store Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Building className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                        <input
+                          type="text"
+                          required
+                          value={formData.businessName}
+                          onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
+                          placeholder="e.g. Fresh Daily Supermarket"
+                          className="w-full pl-9 pr-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#00478c]/20 focus:border-[#00478c] outline-hidden"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Phone / WhatsApp Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                        <input
+                          type="tel"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="e.g. +91 98765 43210"
+                          className="w-full pl-9 pr-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#00478c]/20 focus:border-[#00478c] outline-hidden"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Official Email Address
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="e.g. contact@freshdaily.in"
+                          className="w-full pl-9 pr-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#00478c]/20 focus:border-[#00478c] outline-hidden"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        City / Outlet Location
+                      </label>
+                      <div className="relative">
+                        <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                        <input
+                          type="text"
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          placeholder="e.g. Chennai, Tamil Nadu"
+                          className="w-full pl-9 pr-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#00478c]/20 focus:border-[#00478c] outline-hidden"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Retail Store Type
+                      </label>
+                      <select
+                        value={formData.storeType}
+                        onChange={(e) => setFormData({ ...formData, storeType: e.target.value })}
+                        className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#00478c]/20 focus:border-[#00478c] outline-hidden bg-white"
+                      >
+                        <option value="Supermarket & Grocery">Supermarket &amp; Grocery</option>
+                        <option value="Fruits & Mandi Produce">Fruits &amp; Mandi Fresh Produce</option>
+                        <option value="Bakery & Sweets">Bakery &amp; Sweets</option>
+                        <option value="Restaurant & QSR">Restaurant &amp; Quick Service Food</option>
+                        <option value="Departmental / General Store">Departmental / General Store</option>
+                        <option value="Apparel & Footwear">Apparel &amp; Footwear</option>
+                        <option value="Other Retail">Other Retail Business</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Counter count selection */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-2">
+                      Number of Billing Counters
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {['1 Counter', '2 - 3 Counters', '4 - 8 Counters', 'Multi-Store Chain'].map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, counterCount: c })}
+                          className={`px-3 py-2 rounded-xl text-xs font-semibold border transition text-center cursor-pointer ${
+                            formData.counterCount === c
+                              ? 'bg-[#00478c] text-white border-[#00478c] shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Hardware & Peripheral interests */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Required Devices &amp; Peripherals (Select all that apply)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      {[
+                        'Windows POS Terminal (Local PC)',
+                        'Digital Weighing Scale (RS232 Auto-Tare)',
+                        '80mm Thermal Receipt Printer',
+                        'CrowPanel Hardware (ESP Touch POS)',
+                        'Handheld 1D/2D Barcode Scanner',
+                        'Customer Display Kiosk'
+                      ].map((hw) => {
+                        const checked = formData.hardwareRequirements.includes(hw);
+                        return (
+                          <label
+                            key={hw}
+                            onClick={() => handleCheckboxToggle(hw)}
+                            className={`flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer select-none transition ${
+                              checked
+                                ? 'bg-blue-50/60 border-blue-300 text-slate-900 font-semibold'
+                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => {}}
+                              className="rounded text-[#00478c] focus:ring-0"
+                            />
+                            <span className="text-[11px]">{hw}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Notes / Special requirements */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Specific Inquiries or Existing Hardware Setup (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="e.g. We currently use Essae digital scales and require offline billing with cloud sync for 2 counters."
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#00478c]/20 focus:border-[#00478c] outline-hidden"
+                    ></textarea>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3.5 rounded-xl bg-[#00478c] hover:bg-[#003870] text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <span>Sending Your Request...</span>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Request Pricing &amp; System Details</span>
+                      </>
+                    )}
+                  </button>
+
+                  <p className="text-[11px] text-center text-slate-400">
+                    🔒 No spam. Your information is kept strictly confidential and used only to prepare your customized retail quotation.
+                  </p>
+                </form>
+              )}
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border-2 border-[#00478c] shadow-lg relative flex flex-col justify-between">
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-[#00478c] text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
-                Most Popular
-              </span>
-              <div>
-                <span className="text-xs font-bold text-[#00478c] uppercase">Windows POS Pro</span>
-                <h3 className="text-xl font-bold text-slate-900 mt-1">Local Terminal</h3>
-                <div className="mt-4 mb-6">
-                  <span className="text-3xl font-extrabold text-slate-900">₹1,299</span>
-                  <span className="text-xs text-slate-500"> / month / store</span>
-                </div>
-                <ul className="space-y-2.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Full Windows offline billing terminal</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> pospro.plannestapp.com cloud manager</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Single-terminal machine license &amp; MAC lock</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> RS232 auto-tare digital scale driver</li>
-                </ul>
-              </div>
-              <button
-                onClick={() => onOpenAuth('signup')}
-                className="mt-8 w-full py-2.5 rounded-xl text-xs font-bold bg-[#00478c] hover:bg-[#003870] text-white transition shadow-sm"
-              >
-                Start Free Trial
-              </button>
-            </div>
+            {/* Right: Why Choose Plannest + Direct Contact Sidebar */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Process Highlights Card */}
+              <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                  <span>What You Receive</span>
+                </h3>
 
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold text-purple-600 uppercase">Enterprise Fleet</span>
-                <h3 className="text-xl font-bold text-slate-900 mt-1">Multi-Store Chain</h3>
-                <div className="mt-4 mb-6">
-                  <span className="text-3xl font-extrabold text-slate-900">₹2,499</span>
-                  <span className="text-xs text-slate-500"> / month / chain</span>
-                </div>
-                <ul className="space-y-2.5 text-xs text-slate-600">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Unlimited mixed terminals (ESP + Windows)</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> pos.plannestapp.com Master SaaS Hub</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600" /> Live fleet telemetry &amp; heartbeat tracking</li>
+                <ul className="space-y-4 text-xs">
+                  <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#00478c] flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">
+                      1
+                    </div>
+                    <div>
+                      <strong className="text-slate-900 block font-bold">Custom Counter Pricing</strong>
+                      <span className="text-slate-500">Transparent pricing for single counter or multi-terminal chains with zero hidden charges.</span>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#00478c] flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">
+                      2
+                    </div>
+                    <div>
+                      <strong className="text-slate-900 block font-bold">Hardware Compatibility Assessment</strong>
+                      <span className="text-slate-500">We verify your existing PCs, thermal printers, barcode scanners, and weighing scale models.</span>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-blue-50 text-[#00478c] flex items-center justify-center shrink-0 font-bold text-xs mt-0.5">
+                      3
+                    </div>
+                    <div>
+                      <strong className="text-slate-900 block font-bold">Free Live Demonstration &amp; Trial</strong>
+                      <span className="text-slate-500">Test the lightning-fast offline billing terminal on your computer before making any commitment.</span>
+                    </div>
+                  </li>
                 </ul>
               </div>
-              <button
-                onClick={() => onOpenAuth('signup')}
-                className="mt-8 w-full py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition"
-              >
-                Contact Enterprise
-              </button>
+
+              {/* Direct Help / Instant Contact Card */}
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 sm:p-7 rounded-3xl shadow-md space-y-4">
+                <div className="flex items-center gap-2 text-blue-400 text-xs font-bold uppercase tracking-wider">
+                  <Phone className="w-4 h-4" />
+                  <span>Need Instant Answers?</span>
+                </div>
+                <h4 className="text-lg font-bold text-white">Speak with Our Retail Technical Specialists</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Call or chat with our team directly for urgent store setups, scale integrations, or multi-branch deployments.
+                </p>
+
+                <div className="space-y-2 pt-1 font-mono text-xs">
+                  <a
+                    href="tel:+919940630536"
+                    className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition font-bold"
+                  >
+                    <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>+91 99406 30536</span>
+                  </a>
+                  <a
+                    href="mailto:contact@plannestapp.com"
+                    className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition font-bold"
+                  >
+                    <Mail className="w-4 h-4 text-blue-400 shrink-0" />
+                    <span>contact@plannestapp.com</span>
+                  </a>
+                </div>
+
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+                  <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Support Desk Active
+                  </span>
+                  <span>9:00 AM – 9:00 PM IST</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
