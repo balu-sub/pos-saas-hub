@@ -1,0 +1,2556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plannest Retail POS — Complete Visual User & Operations Guide</title>
+  <!--
+  =========================================================================================
+  PLANNEST POS — MODULAR HELP & USER GUIDE ARCHITECTURE
+  =========================================================================================
+  MAINTENANCE & NAMING CONVENTION GUIDE (FOR FUTURE SOFTWARE UPDATES):
+  1. Every major menu is wrapped in a <section> with:
+     - id="help-mod-[XX]-[slug]"
+     - class="help-module help-mod--[slug]"
+     - data-help-module="mod-[XX]-[slug]"
+  2. Every submenu / screen / modal is wrapped in an isolated <article> with:
+     - id="help-sec-[XX]-[YY]-[slug]"
+     - class="help-section-block help-sub--[slug]"
+     - data-help-section="sec-[XX]-[YY]-[slug]"
+     - data-app-scope="both-local-and-web" | "local-only" | "web-only"
+  3. Every section is enclosed between exact comment markers:
+     <!-- [SECTION-START: help-sec-XX-YY-slug] -->
+     ...
+     <!-- [SECTION-END: help-sec-XX-YY-slug] -->
+     If a single screen or submenu changes in the software, search for its section ID
+     and update ONLY that block or replace its screenshot file in ./screenshots/.
+  4. CSS Classes follow strict BEM-style prefixing (.help-*):
+     - .help-layout, .help-sidebar, .help-main
+     - .help-nav-group, .help-nav-parent, .help-nav-child
+     - .help-module, .help-module-header, .help-section-block
+     - .help-scope-banner, .help-scope-banner--both, .help-scope-banner--local, .help-scope-banner--web
+     - .help-screenshot-card, .help-screenshot-img, .help-screenshot-caption
+     - .help-purpose-box, .help-data-table, .help-steps-list, .help-step-card
+     - .help-callout--tip, .help-callout--warning, .help-ui-btn, .help-ui-kbd
+  =========================================================================================
+  -->
+  <style>
+    :root {
+      --help-primary: #00478c;
+      --help-primary-dark: #00356b;
+      --help-primary-light: #e8f1fb;
+      --help-emerald: #059669;
+      --help-emerald-light: #ecfdf5;
+      --help-emerald-border: #a7f3d0;
+      --help-amber: #d97706;
+      --help-amber-light: #fffbeb;
+      --help-amber-border: #fde68a;
+      --help-purple: #6d28d9;
+      --help-purple-light: #f5f3ff;
+      --help-purple-border: #ddd6fe;
+      --help-bg: #f4f6f9;
+      --help-surface: #ffffff;
+      --help-text: #0f172a;
+      --help-text-muted: #475569;
+      --help-border: #cbd5e1;
+      --help-border-light: #e2e8f0;
+      --help-sidebar-width: 320px;
+      --help-header-height: 68px;
+      --help-radius-lg: 14px;
+      --help-radius-md: 10px;
+      --help-radius-sm: 6px;
+      --help-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 88px;
+    }
+
+    body.help-body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--help-bg);
+      color: var(--help-text);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+
+    /* =========================================================================
+       TOPBAR (.help-topbar)
+       ========================================================================= */
+    .help-topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--help-header-height);
+      background: #ffffff;
+      border-bottom: 1px solid var(--help-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .help-topbar__brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .help-topbar__badge {
+      background: var(--help-primary);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 16px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .help-topbar__title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--help-text);
+    }
+
+    .help-topbar__subtitle {
+      font-size: 12px;
+      color: var(--help-text-muted);
+      display: block;
+      font-weight: 500;
+    }
+
+    .help-topbar__controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .help-search-box {
+      position: relative;
+      width: 300px;
+    }
+
+    .help-search-box__input {
+      width: 100%;
+      padding: 9px 14px 9px 36px;
+      border: 1.5px solid var(--help-border);
+      border-radius: 9px;
+      font-size: 13.5px;
+      font-weight: 500;
+      outline: none;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+
+    .help-search-box__input:focus {
+      background: #ffffff;
+      border-color: var(--help-primary);
+      box-shadow: 0 0 0 3px rgba(0, 71, 140, 0.15);
+    }
+
+    .help-search-box__icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 15px;
+      pointer-events: none;
+    }
+
+    .help-btn-action {
+      background: var(--help-primary);
+      color: #ffffff;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+
+    .help-btn-action:hover {
+      background: var(--help-primary-dark);
+    }
+
+    /* =========================================================================
+       LAYOUT SHELL (.help-layout, .help-sidebar, .help-main)
+       ========================================================================= */
+    .help-layout {
+      display: flex;
+      padding-top: var(--help-header-height);
+      min-height: 100vh;
+    }
+
+    .help-sidebar {
+      width: var(--help-sidebar-width);
+      position: fixed;
+      top: var(--help-header-height);
+      bottom: 0;
+      left: 0;
+      background: #ffffff;
+      border-right: 1px solid var(--help-border);
+      overflow-y: auto;
+      padding: 18px 14px 40px 14px;
+      z-index: 90;
+    }
+
+    .help-sidebar__heading {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #64748b;
+      padding: 6px 10px 10px 10px;
+      border-bottom: 1px solid var(--help-border-light);
+      margin-bottom: 10px;
+    }
+
+    .help-nav-group {
+      margin-bottom: 12px;
+    }
+
+    .help-nav-parent {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--help-text);
+      text-decoration: none;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid var(--help-border-light);
+      transition: all 0.15s;
+    }
+
+    .help-nav-parent:hover,
+    .help-nav-parent.active {
+      background: var(--help-primary-light);
+      color: var(--help-primary);
+      border-color: #93c5fd;
+    }
+
+    .help-nav-sublist {
+      list-style: none;
+      margin-top: 4px;
+      padding-left: 10px;
+      border-left: 2px solid #e2e8f0;
+      margin-left: 12px;
+    }
+
+    .help-nav-child {
+      display: block;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--help-text-muted);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .help-nav-child:hover,
+    .help-nav-child.active {
+      background: #eff6ff;
+      color: var(--help-primary);
+      font-weight: 700;
+    }
+
+    .help-nav-tag {
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    .help-nav-tag--both {
+      background: var(--help-emerald-light);
+      color: var(--help-emerald);
+      border: 1px solid var(--help-emerald-border);
+    }
+
+    .help-nav-tag--local {
+      background: #eff6ff;
+      color: var(--help-primary);
+      border: 1px solid #bfdbfe;
+    }
+
+    .help-main {
+      flex: 1;
+      margin-left: var(--help-sidebar-width);
+      padding: 28px 36px 80px 36px;
+      max-width: 1180px;
+    }
+
+    /* =========================================================================
+       MODULE & SECTION BLOCKS (.help-module, .help-section-block)
+       ========================================================================= */
+    .help-module {
+      margin-bottom: 48px;
+    }
+
+    .help-module-header {
+      background: linear-gradient(135deg, #00478c 0%, #002b59 100%);
+      color: #ffffff;
+      padding: 22px 26px;
+      border-radius: var(--help-radius-lg);
+      margin-bottom: 24px;
+      box-shadow: var(--help-shadow);
+    }
+
+    .help-module-header__eyebrow {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #93c5fd;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .help-module-header__title {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .help-module-header__desc {
+      font-size: 14px;
+      color: #e2e8f0;
+      max-width: 820px;
+    }
+
+    .help-section-block {
+      background: var(--help-surface);
+      border: 1px solid var(--help-border);
+      border-radius: var(--help-radius-lg);
+      padding: 26px 28px;
+      margin-bottom: 28px;
+      box-shadow: var(--help-shadow);
+    }
+
+    .help-section-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--help-border-light);
+      margin-bottom: 16px;
+    }
+
+    .help-section-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--help-text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .help-section-code {
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 3px 8px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* =========================================================================
+       PLATFORM SCOPE BANNERS (SAME IN BOTH LOCAL & WEB vs LOCAL ONLY vs WEB ONLY)
+       ========================================================================= */
+    .help-scope-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 16px;
+      border-radius: var(--help-radius-md);
+      margin-bottom: 18px;
+      font-size: 13.5px;
+    }
+
+    .help-scope-banner--both {
+      background: var(--help-emerald-light);
+      border: 1.5px solid var(--help-emerald-border);
+      color: #065f46;
+    }
+
+    .help-scope-banner--local {
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      color: #1e40af;
+    }
+
+    .help-scope-banner--web {
+      background: var(--help-purple-light);
+      border: 1.5px solid var(--help-purple-border);
+      color: #5b21b6;
+    }
+
+    .help-scope-banner__icon {
+      font-size: 20px;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    .help-scope-banner__title {
+      font-weight: 800;
+      display: block;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+
+    /* =========================================================================
+       PURPOSE BOX, SCREENSHOTS, DATA TABLES & STEP-BY-STEP CARDS
+       ========================================================================= */
+    .help-purpose-box {
+      background: #f8fafc;
+      border-left: 4px solid var(--help-primary);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 18px;
+      font-size: 14.5px;
+    }
+
+    .help-purpose-box strong {
+      color: var(--help-primary);
+    }
+
+    .help-screenshot-card {
+      margin: 18px 0 22px 0;
+      border: 1.5px solid var(--help-border);
+      border-radius: var(--help-radius-md);
+      overflow: hidden;
+      background: #0f172a;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .help-screenshot-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: zoom-in;
+      transition: opacity 0.15s;
+    }
+
+    .help-screenshot-img:hover {
+      opacity: 0.96;
+    }
+
+    .help-screenshot-caption {
+      background: #f8fafc;
+      padding: 10px 16px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--help-text-muted);
+      border-top: 1px solid var(--help-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .help-sub-heading {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--help-text);
+      margin: 20px 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .help-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 13.5px;
+      border: 1px solid var(--help-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .help-data-table th {
+      background: #f1f5f9;
+      color: #1e293b;
+      font-weight: 800;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1.5px solid var(--help-border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .help-data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--help-border-light);
+      vertical-align: top;
+    }
+
+    .help-data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .help-data-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .help-steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .help-step-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: #f8fafc;
+      border: 1px solid var(--help-border-light);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+
+    .help-step-num {
+      background: var(--help-primary);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 13px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .help-step-body {
+      flex: 1;
+      font-size: 14px;
+    }
+
+    .help-step-body strong {
+      color: #0f172a;
+    }
+
+    .help-ui-btn {
+      display: inline-block;
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 1px 7px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e1;
+      font-family: inherit;
+    }
+
+    .help-ui-btn--primary {
+      background: #dbeafe;
+      color: #00478c;
+      border-color: #93c5fd;
+    }
+
+    .help-ui-kbd {
+      display: inline-block;
+      background: #1e293b;
+      color: #f8fafc;
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 11.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .help-callout {
+      padding: 13px 16px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      margin-top: 14px;
+    }
+
+    .help-callout--tip {
+      background: var(--help-amber-light);
+      border: 1px solid var(--help-amber-border);
+      color: #92400e;
+    }
+
+    /* Lightbox modal for zooming screenshots */
+    .help-lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.88);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+    }
+
+    .help-lightbox.open {
+      display: flex;
+    }
+
+    .help-lightbox img {
+      max-width: 96vw;
+      max-height: 92vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      background: #fff;
+    }
+
+    @media (max-width: 960px) {
+      .help-sidebar {
+        display: none;
+      }
+      .help-main {
+        margin-left: 0;
+        padding: 20px 16px;
+      }
+    }
+
+    @media print {
+      .help-topbar,
+      .help-sidebar {
+        display: none !important;
+      }
+      .help-main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      .help-section-block {
+        break-inside: avoid;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body class="help-body">
+
+  <!-- =========================================================================
+       TOP HEADER BAR
+       ========================================================================= -->
+  <header class="help-topbar" id="help-topbar">
+    <div class="help-topbar__brand">
+      <span class="help-topbar__badge">PLANNEST POS</span>
+      <div>
+        <span class="help-topbar__title">Complete Visual User &amp; Operations Manual</span>
+        <span class="help-topbar__subtitle">Step-by-step guide for Store Cashiers, Managers &amp; Owners (Local App + Cloud Web App)</span>
+      </div>
+    </div>
+
+    <div class="help-topbar__controls">
+      <div class="help-search-box">
+        <span class="help-search-box__icon">&#128269;</span>
+        <input
+          type="text"
+          id="help-search-input"
+          class="help-search-box__input"
+          placeholder="Search any menu, button, or topic..."
+          oninput="filterHelpSections(this.value)"
+        />
+      </div>
+      <button type="button" class="help-btn-action" onclick="window.print()">
+        &#128424; Print / Save PDF
+      </button>
+    </div>
+  </header>
+
+  <div class="help-layout">
+    <!-- =========================================================================
+         LEFT SIDEBAR NAVIGATION (TABLE OF CONTENTS)
+         ========================================================================= -->
+    <aside class="help-sidebar" id="help-sidebar" aria-label="Help Manual Navigation">
+      <div class="help-sidebar__heading">Contents &amp; Quick Links</div>
+
+      <!-- Group 1: First Screen & POS Billing -->
+      <div class="help-nav-group">
+        <a href="#help-mod-01-pos-billing" class="help-nav-parent">
+          <span>1. First Screen &amp; POS Billing</span>
+          <span class="help-nav-tag help-nav-tag--local">Local</span>
+        </a>
+        <ul class="help-nav-sublist">
+          <li><a href="#help-sec-01-01-first-screen" class="help-nav-child">1.1 First Screen, Header &amp; Sidebar</a></li>
+          <li><a href="#help-sec-01-02-active-cart" class="help-nav-child">1.2 Adding Items &amp; Shopping Basket</a></li>
+          <li><a href="#help-sec-01-03-numpad-sku" class="help-nav-child">1.3 Numpad SKU Quick Entry [F2]</a></li>
+          <li><a href="#help-sec-01-04-duplicate-bill" class="help-nav-child">1.4 Duplicate Bill / Reprint [F7]</a></li>
+          <li><a href="#help-sec-01-05-customer-khata" class="help-nav-child">1.5 Customer, Loyalty &amp; Khata Credit</a></li>
+          <li><a href="#help-sec-01-06-checkout-payment" class="help-nav-child">1.6 Payment &amp; Split Tender [F12]</a></li>
+        </ul>
+      </div>
+
+      <!-- Group 2: Admin Hub -->
+      <div class="help-nav-group">
+        <a href="#help-mod-02-admin-hub" class="help-nav-parent">
+          <span>2. Admin Hub (4 Submenus)</span>
+          <span class="help-nav-tag help-nav-tag--both">Both</span>
+        </a>
+        <ul class="help-nav-sublist">
+          <li><a href="#help-sec-02-01-catalog-stock" class="help-nav-child">2.1 Submenu: Catalog &amp; Stock</a></li>
+          <li><a href="#help-sec-02-02-add-edit-item" class="help-nav-child">2.2 Add / Edit Item &amp; Barcode</a></li>
+          <li><a href="#help-sec-02-03-set-deal-offer" class="help-nav-child">2.3 Set Deal / Offer of the Day</a></li>
+          <li><a href="#help-sec-02-04-loyalty-program" class="help-nav-child">2.4 Submenu: Customer Loyalty</a></li>
+          <li><a href="#help-sec-02-05-outlet-profile" class="help-nav-child">2.5 Submenu: Outlet Profile &amp; GST</a></li>
+          <li><a href="#help-sec-02-06-user-management" class="help-nav-child">2.6 Submenu: User Management</a></li>
+        </ul>
+      </div>
+
+      <!-- Group 3: Cash & UPI -->
+      <div class="help-nav-group">
+        <a href="#help-mod-03-cash-upi" class="help-nav-parent">
+          <span>3. Cash &amp; UPI Reconciliation</span>
+          <span class="help-nav-tag help-nav-tag--local">Local</span>
+        </a>
+        <ul class="help-nav-sublist">
+          <li><a href="#help-sec-03-01-drawer-counter" class="help-nav-child">3.1 Note Counter &amp; Shift Totals</a></li>
+          <li><a href="#help-sec-03-02-safe-drop-close" class="help-nav-child">3.2 Safe Drop &amp; Close Shift (Z-Report)</a></li>
+        </ul>
+      </div>
+
+      <!-- Group 4: Supplier & Replenishment -->
+      <div class="help-nav-group">
+        <a href="#help-mod-04-replenishment" class="help-nav-parent">
+          <span>4. Supplier &amp; Replenishment</span>
+          <span class="help-nav-tag help-nav-tag--both">Both</span>
+        </a>
+        <ul class="help-nav-sublist">
+          <li><a href="#help-sec-04-01-recommendations" class="help-nav-child">4.1 Submenu: Stock Recommendations</a></li>
+          <li><a href="#help-sec-04-02-suppliers-master" class="help-nav-child">4.2 Submenu: Suppliers Master</a></li>
+          <li><a href="#help-sec-04-03-purchase-orders" class="help-nav-child">4.3 Submenu: Purchase Orders &amp; GRN</a></li>
+          <li><a href="#help-sec-04-04-create-multi-po" class="help-nav-child">4.4 Creating a Multi-Item PO</a></li>
+          <li><a href="#help-sec-04-05-three-way-match" class="help-nav-child">4.5 Submenu: 3-Way Invoice Matching</a></li>
+        </ul>
+      </div>
+
+      <!-- Group 5: Store Sales Analytics -->
+      <div class="help-nav-group">
+        <a href="#help-mod-05-analytics" class="help-nav-parent">
+          <span>5. Store Sales Analytics</span>
+          <span class="help-nav-tag help-nav-tag--both">Both</span>
+        </a>
+        <ul class="help-nav-sublist">
+          <li><a href="#help-sec-05-01-executive-overview" class="help-nav-child">5.1 Submenu: Executive Overview</a></li>
+          <li><a href="#help-sec-05-02-itemwise-sales" class="help-nav-child">5.2 Submenu: Item-Wise Period Sales</a></li>
+          <li><a href="#help-sec-05-03-category-sales" class="help-nav-child">5.3 Submenu: Category-Wise Report</a></li>
+          <li><a href="#help-sec-05-04-period-sales" class="help-nav-child">5.4 Submenu: Period-Wise Report</a></li>
+          <li><a href="#help-sec-05-05-mandi-trends" class="help-nav-child">5.5 Submenu: Mandi Rate Trends</a></li>
+        </ul>
+      </div>
+
+      <!-- Group 6: Peripherals & Hardware -->
+      <div class="help-nav-group">
+        <a href="#help-mod-06-peripherals" class="help-nav-parent">
+          <span>6. Peripherals &amp; Hardware</span>
+          <span class="help-nav-tag help-nav-tag--local">Local</span>
+        </a>
+        <ul class="help-nav-sublist">
+          <li><a href="#help-sec-06-01-weighing-scale" class="help-nav-child">6.1 Submenu: 4. Weighing Scale</a></li>
+          <li><a href="#help-sec-06-02-receipt-printer" class="help-nav-child">6.2 Submenu: 5. Receipt &amp; Label Printer</a></li>
+          <li><a href="#help-sec-06-03-barcode-scanner" class="help-nav-child">6.3 Submenu: 3. Barcode Scanner</a></li>
+        </ul>
+      </div>
+
+      <!-- Group 7: Web App Machine Lock & Shortcuts -->
+      <div class="help-nav-group">
+        <a href="#help-mod-07-web-and-shortcuts" class="help-nav-parent">
+          <span>7. Web License &amp; Shortcuts</span>
+          <span class="help-nav-tag help-nav-tag--both">Guide</span>
+        </a>
+        <ul class="help-nav-sublist">
+          <li><a href="#help-sec-07-01-machine-license" class="help-nav-child">7.1 Web Terminal &amp; Machine Lock</a></li>
+          <li><a href="#help-sec-07-02-keyboard-shortcuts" class="help-nav-child">7.2 Keyboard Shortcuts &amp; Tips</a></li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- =========================================================================
+         MAIN CONTENT AREA
+         ========================================================================= -->
+    <main class="help-main" id="help-main-content">
+
+      <!-- =======================================================================
+           MODULE 1: FIRST SCREEN & POS BILLING (mod-01-pos-billing)
+           ======================================================================= -->
+      <section id="help-mod-01-pos-billing" class="help-module help-mod--pos-billing" data-help-module="mod-01-pos-billing">
+        <div class="help-module-header">
+          <span class="help-module-header__eyebrow">MODULE 1 • STARTING SCREEN &amp; COUNTER CHECKOUT</span>
+          <h1 class="help-module-header__title">1. First Screen &amp; POS Billing Menu</h1>
+          <p class="help-module-header__desc">
+            When you open the Plannest POS application on your billing counter computer, this is the very first screen you see. It is designed so any cashier can scan items, weigh vegetables/fruits, and print a customer bill in seconds.
+          </p>
+        </div>
+
+        <!-- [SECTION-START: help-sec-01-01-first-screen] -->
+        <article
+          id="help-sec-01-01-first-screen"
+          class="help-section-block help-sub--first-screen"
+          data-help-section="sec-01-01-first-screen"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">1.1 Understanding the First Screen (Top Bar, Left Menu, Product Grid &amp; Bottom Bar)</h2>
+            <span class="help-section-code">ID: help-sec-01-01-first-screen</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--local">
+            <span class="help-scope-banner__icon">&#128421;</span>
+            <div>
+              <span class="help-scope-banner__title">LOCAL COUNTER APP SCREEN</span>
+              This fast billing screen appears on your store counter computer. It works 100% offline even if your internet cable is unplugged.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this screen for?</strong> This is your main billing counter screen. It is divided into 4 simple areas: the <strong>Top Header Bar</strong> (store info, live scale weight, language, cashier name), the <strong>Left Navigation Menu</strong> (to switch between the 6 store modules), the <strong>Center Product Catalog</strong> (all your store items with photos and prices), and the <strong>Right Shopping Basket</strong> (the current customer's bill).
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-01-pos-billing-main">
+            <img
+              src="screenshots/sec-01-pos-billing-main.png"
+              alt="First Screen - POS Billing Main Layout"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 1.1: The First Screen when you open Plannest POS (POS Billing View)</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <h3 class="help-sub-heading">&#128203; What Data &amp; Controls Are Available on This First Screen?</h3>
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Screen Area</th>
+                <th>Button / Item Name</th>
+                <th>What Data It Shows &amp; What It Does</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Top Header (Left)</strong></td>
+                <td><span class="help-ui-btn">&#9776;</span> Menu Toggle &amp; Store Name</td>
+                <td>Shows your store name (e.g., <em>Amma Appa Kadai</em>). Clicking <span class="help-ui-btn">&#9776;</span> (or pressing <span class="help-ui-kbd">Ctrl+B</span>) hides the left menu to make the product screen wider.</td>
+              </tr>
+              <tr>
+                <td><strong>Top Header (Center)</strong></td>
+                <td><span class="help-ui-btn">0.000 kg</span> Live Scale Display</td>
+                <td>Shows the live weight sitting on your electronic weighing machine. Clicking it resets (Zero/Tare) the scale to 0.000 kg.</td>
+              </tr>
+              <tr>
+                <td><strong>Top Header (Right)</strong></td>
+                <td><span class="help-ui-btn">EN / தமிழ் / हिन्दी</span> &amp; Cashier Profile</td>
+                <td>Changes item names between English, Tamil, and Hindi immediately. Next to it is the live clock and the logged-in Cashier/Admin name (click to switch cashier using a 4-digit PIN).</td>
+              </tr>
+              <tr>
+                <td><strong>Left Sidebar Menu</strong></td>
+                <td>6 Main Menus + <span class="help-ui-btn">Help / Guide</span> + <span class="help-ui-btn">Lock / Exit</span></td>
+                <td>Lets you switch between <strong>POS Billing</strong>, <strong>Admin Hub</strong>, <strong>Cash &amp; UPI</strong>, <strong>Supplier &amp; Replenishment</strong>, <strong>Store Sales Analytics</strong>, and <strong>Peripherals &amp; Hardware</strong>. Click <span class="help-ui-btn">&laquo;</span> to shrink the menu to icons only.</td>
+              </tr>
+              <tr>
+                <td><strong>Center Catalog Area</strong></td>
+                <td>Search Bar, <span class="help-ui-btn">OFFERS</span> Strip &amp; Category Tabs</td>
+                <td>Shows all active products (e.g., <em>All Items (170)</em>, <em>Fruits</em>, <em>Vegetables</em>, <em>Dairy</em>, <em>Groceries</em>). Each product card displays its Photo, Category, 4-digit SKU code (e.g., <code>0095</code>), Name, MRP struck through, Selling Price, and discount badge (e.g., <em>13% OFF</em>).</td>
+              </tr>
+              <tr>
+                <td><strong>Bottom Status Strip</strong></td>
+                <td>Online Status, <span class="help-ui-btn">Reload DB</span>, <span class="help-ui-btn">Touch ON</span>, <span class="help-ui-btn">Kiosk</span></td>
+                <td>Shows green <strong>Online</strong> dot, total items synced, how many hardware peripherals are active, a <span class="help-ui-btn">Touch ON</span> button for on-screen touch keyboard, and <span class="help-ui-btn">Kiosk</span> mode.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-01-01-first-screen] -->
+
+        <!-- [SECTION-START: help-sec-01-02-active-cart] -->
+        <article
+          id="help-sec-01-02-active-cart"
+          class="help-section-block help-sub--active-cart"
+          data-help-section="sec-01-02-active-cart"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">1.2 Adding Items to the Shopping Basket &amp; Adjusting Quantities</h2>
+            <span class="help-section-code">ID: help-sec-01-02-active-cart</span>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this for?</strong> As a customer brings items to the counter, you add them to the right-side Shopping Basket by scanning barcodes, clicking product cards, or clicking the top daily offer buttons.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-01b-pos-billing-active-cart">
+            <img
+              src="screenshots/sec-01b-pos-billing-active-cart.png"
+              alt="POS Billing with Active Shopping Cart"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 1.2: Items added to the Right-Side Shopping Basket with automatic GST &amp; Total calculation</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <h3 class="help-sub-heading">&#128073; Step-by-Step: How to Add &amp; Edit Items in a Bill</h3>
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                <strong>Scan or Tap an Item:</strong> Point your barcode scanner at the packet, OR tap any product picture on the screen (for example, <em>Alphonso</em> or <em>Arokya Green</em>), OR type the item name/Tamil name in the top search box.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                <strong>Change Quantity:</strong> In the right-side basket, tap <span class="help-ui-btn">+</span> or <span class="help-ui-btn">-</span> to increase or decrease the count, or click inside the white number box to type an exact weight (like <code>0.750</code> for 750 grams).
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">3</span>
+              <div class="help-step-body">
+                <strong>Remove an Item or Clear Basket:</strong> Click the <span class="help-ui-btn">&times;</span> on the right side of any item row to remove just that item, or click <span class="help-ui-btn">Clear All</span> at the bottom to empty the entire basket.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">4</span>
+              <div class="help-step-body">
+                <strong>Hold / Park a Bill:</strong> If a customer forgets their wallet or goes back to pick another item, click <span class="help-ui-btn">Hold / Park</span>. Their basket is saved safely under <span class="help-ui-btn">Held</span> at the top right so you can bill the next person in line immediately!
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-01-02-active-cart] -->
+
+        <!-- [SECTION-START: help-sec-01-03-numpad-sku] -->
+        <article
+          id="help-sec-01-03-numpad-sku"
+          class="help-section-block help-sub--numpad-sku"
+          data-help-section="sec-01-03-numpad-sku"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">1.3 Numpad SKU Quick Entry Modal (<span class="help-ui-kbd">F2</span>)</h2>
+            <span class="help-section-code">ID: help-sec-01-03-numpad-sku</span>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this for?</strong> Many loose items (like coriander, ginger, or loose grains) do not have a barcode sticker. Every item in your store has a short 4-digit SKU code (shown in a blue box on every product card, such as <code>0095</code>). Clicking <span class="help-ui-btn help-ui-btn--primary">Numpad SKU [F2]</span> lets you punch in the number and weight using big touch buttons.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-01c-pos-billing-numpad-sku">
+            <img
+              src="screenshots/sec-01c-pos-billing-numpad-sku.png"
+              alt="Numpad SKU Entry Modal"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 1.3: Numpad SKU Modal for fast number-pad item lookup and quantity entry</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn help-ui-btn--primary">Numpad SKU [F2]</span> at the top of the billing screen (or press <span class="help-ui-kbd">F2</span> on your keyboard).
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Type the item's SKU number (e.g., <code>0095</code>) or Barcode, enter the Quantity/Weight, and click <span class="help-ui-btn help-ui-btn--primary">Add to Bill</span>.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-01-03-numpad-sku] -->
+
+        <!-- [SECTION-START: help-sec-01-04-duplicate-bill] -->
+        <article
+          id="help-sec-01-04-duplicate-bill"
+          class="help-section-block help-sub--duplicate-bill"
+          data-help-section="sec-01-04-duplicate-bill"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">1.4 Duplicate Bill / Search Past Receipts Modal (<span class="help-ui-kbd">F7</span>)</h2>
+            <span class="help-section-code">ID: help-sec-01-04-duplicate-bill</span>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this for?</strong> If a customer asks for an extra copy of their bill or comes back to verify an old bill, click <span class="help-ui-btn">Duplicate Bill [F7]</span> to look up past bills and reprint them in one click.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-01d-pos-billing-duplicate-bill">
+            <img
+              src="screenshots/sec-01d-pos-billing-duplicate-bill.png"
+              alt="Duplicate Bill Search Modal"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 1.4: Duplicate Bill Modal showing past completed bills with Reprint button</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn">Duplicate Bill [F7]</span> next to the search bar.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Type the Bill Number (e.g., <code>INV/1001</code>) or Customer Name/Phone, select the bill from the list, and click <strong>Reprint Receipt</strong>.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-01-04-duplicate-bill] -->
+
+        <!-- [SECTION-START: help-sec-01-05-customer-khata] -->
+        <article
+          id="help-sec-01-05-customer-khata"
+          class="help-section-block help-sub--customer-khata"
+          data-help-section="sec-01-05-customer-khata"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">1.5 Customer Selection, Loyalty Points &amp; Khata Store Credit</h2>
+            <span class="help-section-code">ID: help-sec-01-05-customer-khata</span>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this for?</strong> At the top of the right-side basket, the default selection is <strong>Walk-in Retail Customer</strong>. Clicking it lets you attach a regular customer to the bill so they earn <strong>Loyalty Points</strong> or use their <strong>Khata (Store Credit)</strong> account.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-01e-pos-billing-customer-select">
+            <img
+              src="screenshots/sec-01e-pos-billing-customer-select.png"
+              alt="Customer Selection Dropdown"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 1.5: Selecting a registered customer, adding a new customer, or checking Loyalty Points &amp; Khata</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn">Walk-in Retail Customer &#9662;</span> at the top right of the screen.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Search by the customer's phone number or name and click their name. Their available <strong>Loyalty Points</strong> and <strong>Khata Credit Balance</strong> will appear automatically.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">3</span>
+              <div class="help-step-body">
+                If they are a new regular customer, click <strong>+ Add New Customer</strong> inside the dropdown, enter their Name and Mobile Number, and click Save.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-01-05-customer-khata] -->
+
+        <!-- [SECTION-START: help-sec-01-06-checkout-payment] -->
+        <article
+          id="help-sec-01-06-checkout-payment"
+          class="help-section-block help-sub--checkout-payment"
+          data-help-section="sec-01-06-checkout-payment"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">1.6 Payment &amp; Split-Tender Checkout Modal (<span class="help-ui-kbd">F12</span>)</h2>
+            <span class="help-section-code">ID: help-sec-01-06-checkout-payment</span>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this for?</strong> Once all items are in the basket, clicking <span class="help-ui-btn help-ui-btn--primary">PROCEED TO PAY [F12]</span> opens the Payment window. Customers can pay the full amount by <strong>UPI / QR</strong>, <strong>Cash INR</strong>, <strong>Card (EDC)</strong>, <strong>Khata Credit</strong>, or <strong>Redeem Loyalty Points</strong>—or even split a single bill across two methods (for example, Rs. 500 in Cash + rest by UPI)!
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-01f-pos-billing-checkout-modal">
+            <img
+              src="screenshots/sec-01f-pos-billing-checkout-modal.png"
+              alt="Payment and Split Tender Checkout Modal"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 1.6: Payment &amp; Split-Tender Modal supporting UPI QR, Cash, Card, Khata &amp; Points</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <h3 class="help-sub-heading">&#128073; Step-by-Step: How to Complete a Sale &amp; Print the Bill</h3>
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn help-ui-btn--primary">PROCEED TO PAY [F12]</span> (or press <span class="help-ui-kbd">F12</span> on your keyboard).
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                <strong>Choose Payment Method:</strong> Click <span class="help-ui-btn">UPI / QR</span>, <span class="help-ui-btn">Cash INR</span>, <span class="help-ui-btn">Card (EDC)</span>, or <span class="help-ui-btn">Khata Credit</span>.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">3</span>
+              <div class="help-step-body">
+                <strong>Add Payment Amount:</strong> If paying full amount, click <span class="help-ui-btn help-ui-btn--primary">+ Add Split (+ Rs. ...)</span> on the right side (or tap currency note buttons like <code>+ ₹500</code> to calculate change to return to the customer).
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">4</span>
+              <div class="help-step-body">
+                <strong>Print Receipt:</strong> Once <em>Balance Remaining</em> shows <code>Rs. 0.00</code>, click <span class="help-ui-btn help-ui-btn--primary">COMPLETE SALE &amp; PRINT RECEIPT</span>. The thermal printer will immediately print the bill and the basket will clear for the next customer.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-01-06-checkout-payment] -->
+      </section>
+
+      <!-- =======================================================================
+           MODULE 2: ADMIN HUB (mod-02-admin-hub) — SAME IN LOCAL & WEB APP
+           ======================================================================= -->
+      <section id="help-mod-02-admin-hub" class="help-module help-mod--admin-hub" data-help-module="mod-02-admin-hub">
+        <div class="help-module-header">
+          <span class="help-module-header__eyebrow">MODULE 2 • STORE MANAGEMENT &amp; CONFIGURATION (SHARED IN LOCAL &amp; WEB)</span>
+          <h1 class="help-module-header__title">2. Admin Hub Menu &amp; Its 4 Submenus</h1>
+          <p class="help-module-header__desc">
+            The Admin Hub is where the store owner or manager controls all products, prices, discounts, loyalty rewards, GST bill formatting, and staff login PINs.
+          </p>
+        </div>
+
+        <!-- [SECTION-START: help-sec-02-01-catalog-stock] -->
+        <article
+          id="help-sec-02-01-catalog-stock"
+          class="help-section-block help-sub--catalog-stock"
+          data-help-section="sec-02-01-catalog-stock"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">2.1 Submenu 1: Catalog &amp; Stock</h2>
+            <span class="help-section-code">ID: help-sec-02-01-catalog-stock</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              This <strong>Catalog &amp; Stock</strong> screen has the exact same layout, buttons, and data in both your Counter Local App and your Web Cloud Manager. Any price, stock, or item change syncs between both automatically!
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> It shows your complete list of store items (e.g., 170 products) in a clean table. Here you can change daily vegetable/fruit rates, check how much stock is left on hand, set promotional deals, print barcode stickers, or add new products.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-02a-admin-catalog-stock">
+            <img
+              src="screenshots/sec-02a-admin-catalog-stock.png"
+              alt="Admin Hub - Catalog and Stock Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 2.1: Admin Hub &rarr; Catalog &amp; Stock Submenu (Identical in Local App &amp; Web App)</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <h3 class="help-sub-heading">&#128203; What Data Is Displayed in the Catalog &amp; Stock Table?</h3>
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Column / Button</th>
+                <th>What Data It Shows</th>
+                <th>How You Use It</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>ITEM DETAILS &amp; IMAGE</strong></td>
+                <td>Product photo, Item Name (e.g., <em>Alphonso</em>), Product ID (<code>PROD-0095</code>), and Unit of Measure (<code>kg</code>, <code>pack</code>, <code>pc</code>).</td>
+                <td>Helps you visually identify every item in your catalog.</td>
+              </tr>
+              <tr>
+                <td><strong>CATEGORY</strong></td>
+                <td>Department badge (<em>Fruits</em>, <em>Vegetables</em>, <em>Dairy</em>, <em>Groceries</em>, etc.).</td>
+                <td>Use the top category dropdown or <span class="help-ui-btn">Categories</span> button to filter or add new departments.</td>
+              </tr>
+              <tr>
+                <td><strong>SKU / BARCODE</strong></td>
+                <td>Short 4-digit SKU (<code>SKU-0095</code>) and printed barcode number (<code>8901009502</code>).</td>
+                <td>Used for barcode scanning or Numpad quick entry.</td>
+              </tr>
+              <tr>
+                <td><strong>COST / MRP / SELLING PRICE</strong></td>
+                <td>Your purchase cost (Rs. 580), printed MRP (Rs. 900), and actual customer Selling Price (Rs. 786).</td>
+                <td>Click <span class="help-ui-btn">Edit</span> on any row to update today's selling price or MRP in seconds.</td>
+              </tr>
+              <tr>
+                <td><strong>STATUS &amp; DEAL / OFFER</strong></td>
+                <td>Shows green <strong>Active</strong> badge (or Inactive) and <span class="help-ui-btn">% + Set Deal</span> button.</td>
+                <td>If an item is out of season, mark it Inactive so it hides from the billing screen. Click <span class="help-ui-btn">+ Set Deal</span> to put it on special discount.</td>
+              </tr>
+              <tr>
+                <td><strong>STOCK ON HAND &amp; CONTROLS</strong></td>
+                <td>Current quantity available (e.g., <code>97 kg</code>) + <span class="help-ui-btn">Edit</span>, <span class="help-ui-btn">Delete</span>, Barcode Icon, and <span class="help-ui-btn">&plusmn;</span> button.</td>
+                <td>Click <span class="help-ui-btn">&plusmn;</span> for quick stock adjustment, the barcode icon to print thermal barcode labels, or <span class="help-ui-btn">Edit</span> to modify full details.</td>
+              </tr>
+              <tr>
+                <td><strong>Hide Photos in Billing Screen</strong></td>
+                <td>Top-right checkbox on the toolbar.</td>
+                <td>Check this box if your cashier prefers compact text-only tiles on the POS Billing screen without photos.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-02-01-catalog-stock] -->
+
+        <!-- [SECTION-START: help-sec-02-02-add-edit-item] -->
+        <article
+          id="help-sec-02-02-add-edit-item"
+          class="help-section-block help-sub--add-edit-item"
+          data-help-section="sec-02-02-add-edit-item"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">2.2 Adding or Editing a Product (<span class="help-ui-btn">+ Add New Item</span> / <span class="help-ui-btn">Edit</span>)</h2>
+            <span class="help-section-code">ID: help-sec-02-02-add-edit-item</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP</span>
+              You can add new products or edit prices from either your counter PC or from home on the web dashboard.
+            </div>
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-02b-admin-add-item-modal">
+            <img
+              src="screenshots/sec-02b-admin-add-item-modal.png"
+              alt="Add New Item Modal in Admin Hub"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 2.2: Add / Edit Product Modal with Image Library, Pricing, Unit &amp; Barcode Scanner support</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn help-ui-btn--primary">+ Add New Item</span> at the top right of Catalog &amp; Stock (or click <span class="help-ui-btn">Edit</span> on an existing item).
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                <strong>Choose Photo:</strong> Click <span class="help-ui-btn">Choose Image from Library</span> to pick a ready-made photo, or paste an image URL.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">3</span>
+              <div class="help-step-body">
+                <strong>Enter Name, Category &amp; Unit:</strong> Type the Item Name, pick its Category (e.g., <em>Fruits</em>), and select how it is sold (<code>kg</code> for loose weight, <code>pc</code> or <code>pack</code> for packets).
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">4</span>
+              <div class="help-step-body">
+                <strong>Set Prices &amp; Barcode:</strong> Fill in <strong>Selling Price (₹)</strong>, <strong>MRP (₹)</strong>, and <strong>Cost (₹)</strong>. For Barcode, click <span class="help-ui-btn">Scan</span> and beep the packet with your scanner (or leave the auto-generated barcode), enter <strong>Initial Stock</strong>, and click <span class="help-ui-btn help-ui-btn--primary">Save Item</span>.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-02-02-add-edit-item] -->
+
+        <!-- [SECTION-START: help-sec-02-03-set-deal-offer] -->
+        <article
+          id="help-sec-02-03-set-deal-offer"
+          class="help-section-block help-sub--set-deal-offer"
+          data-help-section="sec-02-03-set-deal-offer"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">2.3 Setting Promotional Deals &amp; Offers (<span class="help-ui-btn">% + Set Deal</span>)</h2>
+            <span class="help-section-code">ID: help-sec-02-03-set-deal-offer</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP</span>
+              Deals created here immediately highlight on the POS Billing screen under the orange <strong>OFFERS</strong> bar.
+            </div>
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-02c-admin-set-deal-modal">
+            <img
+              src="screenshots/sec-02c-admin-set-deal-modal.png"
+              alt="Set Promotional Deal Modal"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 2.3: Setting a Percentage (%) or Flat Rupee (₹) Promotional Offer on an item</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                In the Catalog &amp; Stock table, click <span class="help-ui-btn">% + Set Deal</span> on any product row (or click <span class="help-ui-btn">Deals &amp; Offers</span> on the toolbar).
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Choose <strong>Percentage Discount (%)</strong> or <strong>Flat Discount (Rs.)</strong>, enter the discount value, pick the duration (<em>Today Only</em>, <em>3 Days</em>, <em>7 Days</em>, or <em>Custom Dates</em>), and click <strong>Activate Offer</strong>.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-02-03-set-deal-offer] -->
+
+        <!-- [SECTION-START: help-sec-02-04-loyalty-program] -->
+        <article
+          id="help-sec-02-04-loyalty-program"
+          class="help-section-block help-sub--loyalty-program"
+          data-help-section="sec-02-04-loyalty-program"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">2.4 Submenu 2: Customer Loyalty Program</h2>
+            <span class="help-section-code">ID: help-sec-02-04-loyalty-program</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Loyalty rules configured here apply identically across your counter POS and cloud dashboard.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> This screen lets you reward repeat customers with points every time they shop, which they can redeem as a discount on future bills.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-02d-admin-loyalty-program">
+            <img
+              src="screenshots/sec-02d-admin-loyalty-program.png"
+              alt="Admin Hub - Customer Loyalty Program Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 2.4: Admin Hub &rarr; Customer Loyalty Program Submenu</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Setting Name</th>
+                <th>What It Means in Simple Words</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Enable Loyalty Rewards</strong></td>
+                <td>Master ON/OFF switch for customer reward points.</td>
+              </tr>
+              <tr>
+                <td><strong>Points Earned per Rs. 100 Spent</strong></td>
+                <td>How many points a customer gets for every Rs. 100 on their bill (e.g., <code>2 Points</code> per Rs. 100).</td>
+              </tr>
+              <tr>
+                <td><strong>Redemption Value (Rs. per 1 Point)</strong></td>
+                <td>How much money 1 point is worth when redeeming (e.g., <code>1 Point = Rs. 1.00</code> discount).</td>
+              </tr>
+              <tr>
+                <td><strong>Minimum Eligible Bill &amp; Minimum Points</strong></td>
+                <td>The minimum bill amount required to earn points, and how many points a customer must collect before they can redeem them.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-02-04-loyalty-program] -->
+
+        <!-- [SECTION-START: help-sec-02-05-outlet-profile] -->
+        <article
+          id="help-sec-02-05-outlet-profile"
+          class="help-section-block help-sub--outlet-profile"
+          data-help-section="sec-02-05-outlet-profile"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">2.5 Submenu 3: Outlet Profile &amp; GST/PAN (Store Info &amp; Bill Preview)</h2>
+            <span class="help-section-code">ID: help-sec-02-05-outlet-profile</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Your store name, address, GSTIN, bill prefix, and receipt formatting sync automatically between your counter PC and web dashboard.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Everything printed on your customer's thermal paper bill—Store Name, Branch, Phone, Address, GSTIN, FSSAI license, Bill Number sequence (<code>INV/1001</code>), and Return Policy—is controlled here, with a <strong>Live 80mm Bill Preview</strong> on the right side!
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-02e-admin-outlet-profile">
+            <img
+              src="screenshots/sec-02e-admin-outlet-profile.png"
+              alt="Admin Hub - Outlet Profile and GST/PAN Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 2.5: Admin Hub &rarr; Outlet Profile &amp; GST/PAN with Live 80mm Thermal Receipt Preview</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Section</th>
+                <th>Fields Available &amp; How to Use Them</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Store Identity</strong></td>
+                <td>Enter your <strong>Outlet / Store Name</strong>, <strong>Branch Name</strong>, <strong>Primary Contact Phone</strong>, and <strong>Official Email</strong>. Check or uncheck <em>Print on Bill</em> next to any field to show or hide it on the paper receipt.</td>
+              </tr>
+              <tr>
+                <td><strong>Bill Numbering &amp; Auto-Increment Rules</strong></td>
+                <td>Set your <strong>Bill Prefix</strong> (e.g., <code>INV/</code>), <strong>Starting Number</strong> (e.g., <code>1001</code>), <strong>Increment Step</strong> (<code>1</code> or <code>2</code>), and <strong>Zero-Padding</strong>. Click <span class="help-ui-btn">Reset Counter to Start</span> at the start of a new financial year.</td>
+              </tr>
+              <tr>
+                <td><strong>Tax &amp; Address Details</strong></td>
+                <td>Enter your shop's street address, <strong>GSTIN</strong>, <strong>PAN</strong>, and <strong>FSSAI License</strong>, then click <strong>Save Outlet Profile</strong> at the bottom.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-02-05-outlet-profile] -->
+
+        <!-- [SECTION-START: help-sec-02-06-user-management] -->
+        <article
+          id="help-sec-02-06-user-management"
+          class="help-section-block help-sub--user-management"
+          data-help-section="sec-02-06-user-management"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">2.6 Submenu 4: User Management (Staff Logins &amp; 4-Digit PINs)</h2>
+            <span class="help-section-code">ID: help-sec-02-06-user-management</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Staff accounts and 4-digit security PINs created in either the Local App or Web App sync across both.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Creates separate login profiles and 4-digit secret PINs for each person working in your shop (Owner/Admin, Store Manager, Billing Cashier, Inventory Clerk, or Self-Service Kiosk).
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-02f-admin-user-management">
+            <img
+              src="screenshots/sec-02f-admin-user-management.png"
+              alt="Admin Hub - User Management Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 2.6: Admin Hub &rarr; User Management Submenu (Staff Roles &amp; Security PINs)</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn help-ui-btn--primary">+ Add New User</span> at the top right.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Enter the Staff Member's Name, Phone, 4-Digit Login PIN (e.g., <code>2580</code>), and select their Role:
+                <br />• <strong>Admin:</strong> Full access to all menus, prices, reports, and user management.
+                <br />• <strong>Manager:</strong> Can manage catalog stock, suppliers, and reports, but cannot delete admins.
+                <br />• <strong>Cashier:</strong> Can use POS Billing and Cash Drawer reconciliation, but cannot alter store settings.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-02-06-user-management] -->
+      </section>
+
+      <!-- =======================================================================
+           MODULE 3: CASH & UPI RECONCILIATION (mod-03-cash-upi)
+           ======================================================================= -->
+      <section id="help-mod-03-cash-upi" class="help-module help-mod--cash-upi" data-help-module="mod-03-cash-upi">
+        <div class="help-module-header">
+          <span class="help-module-header__eyebrow">MODULE 3 • CASH DRAWER ACCOUNTING &amp; SHIFT CLOSING</span>
+          <h1 class="help-module-header__title">3. Cash &amp; UPI Menu (Shift Reconciliation)</h1>
+          <p class="help-module-header__desc">
+            At the end of a cashier's shift or at night when closing the shop, this screen helps you count the physical currency notes in your cash drawer and verify that the cash matches the computer's sales total.
+          </p>
+        </div>
+
+        <!-- [SECTION-START: help-sec-03-01-drawer-counter] -->
+        <article
+          id="help-sec-03-01-drawer-counter"
+          class="help-section-block help-sub--drawer-counter"
+          data-help-section="sec-03-01-drawer-counter"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">3.1 Shift Summary Cards &amp; Physical Indian Currency Note Counter</h2>
+            <span class="help-section-code">ID: help-sec-03-01-drawer-counter</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--local">
+            <span class="help-scope-banner__icon">&#128421;</span>
+            <div>
+              <span class="help-scope-banner__title">LOCAL COUNTER APP SCREEN</span>
+              Used directly at the billing counter to count physical notes and coins in the cash drawer.
+            </div>
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-03a-cash-upi-reconciliation">
+            <img
+              src="screenshots/sec-03a-cash-upi-reconciliation.png"
+              alt="Cash Drawer and Shift Reconciliation Screen"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 3.1: Cash &amp; UPI Menu showing Shift Totals, Note Counter, and Variance Verification</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <h3 class="help-sub-heading">&#128203; What Data Is Shown on the Cash &amp; UPI Screen?</h3>
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Card / Area</th>
+                <th>What Data It Shows</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>OPENING FLOAT</strong></td>
+                <td>The starting change money kept in the drawer in the morning (e.g., <code>Rs. 2000.00</code>).</td>
+              </tr>
+              <tr>
+                <td><strong>CASH SALES</strong></td>
+                <td>Total cash collected from customers during this shift.</td>
+              </tr>
+              <tr>
+                <td><strong>UPI / QR SALES</strong></td>
+                <td>Total money received directly into your bank via UPI QR scans (GPay, PhonePe, Paytm).</td>
+              </tr>
+              <tr>
+                <td><strong>EXPECTED CASH</strong></td>
+                <td>Exact cash that <em>should</em> be inside the drawer right now (<code>Opening Float + Cash Sales - Safe Drops</code>).</td>
+              </tr>
+              <tr>
+                <td><strong>PHYSICAL VARIANCE</strong></td>
+                <td>Shows green <strong>Rs. 0.00 (Balanced)</strong> when your counted notes match Expected Cash, or red if cash is short/extra.</td>
+              </tr>
+              <tr>
+                <td><strong>Indian Currency Notes &amp; Coins</strong></td>
+                <td>Boxes for <strong>Rs. 2000, Rs. 500, Rs. 200, Rs. 100, Rs. 50, Rs. 20, Rs. 10</strong> notes and loose coins. Just type how many notes of each you have in hand, and the computer multiplies and totals them automatically!</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-03-01-drawer-counter] -->
+
+        <!-- [SECTION-START: help-sec-03-02-safe-drop-close] -->
+        <article
+          id="help-sec-03-02-safe-drop-close"
+          class="help-section-block help-sub--safe-drop-close"
+          data-help-section="sec-03-02-safe-drop-close"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">3.2 Recording a Safe Drop &amp; Closing the Shift (Z-Report)</h2>
+            <span class="help-section-code">ID: help-sec-03-02-safe-drop-close</span>
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-03b-cash-safe-drop-modal">
+            <img
+              src="screenshots/sec-03b-cash-safe-drop-modal.png"
+              alt="Record Safe Cash Drop Modal"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 3.2: Recording a Safe Cash Drop when removing cash from the drawer during the day</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                <strong>Record Safe Drop:</strong> Whenever the owner takes cash out of the counter drawer during the day (for safety or to pay a vendor), click <span class="help-ui-btn">Record Safe Drop</span>, enter the amount taken out and the reason, and click Confirm. This keeps your Expected Cash accurate.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                <strong>Close Shift &amp; Print Z-Report:</strong> At night, after entering your note counts, click the red button <span class="help-ui-btn">Close Shift &amp; Print Z-Report</span>. This prints a full day-end summary slip on your thermal printer and resets the shift for tomorrow.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-03-02-safe-drop-close] -->
+      </section>
+
+      <!-- =======================================================================
+           MODULE 4: SUPPLIER & REPLENISHMENT (mod-04-replenishment) — SAME IN BOTH
+           ======================================================================= -->
+      <section id="help-mod-04-replenishment" class="help-module help-mod--replenishment" data-help-module="mod-04-replenishment">
+        <div class="help-module-header">
+          <span class="help-module-header__eyebrow">MODULE 4 • PURCHASING, VENDORS &amp; STOCK INWARD (SHARED IN LOCAL &amp; WEB)</span>
+          <h1 class="help-module-header__title">4. Supplier &amp; Replenishment Menu (4 Submenus)</h1>
+          <p class="help-module-header__desc">
+            Manage all your Mandi traders and FMCG distributors, see which items are running low, create Purchase Orders (PO), receive incoming stock (GRN), and verify supplier bills.
+          </p>
+        </div>
+
+        <!-- [SECTION-START: help-sec-04-01-recommendations] -->
+        <article
+          id="help-sec-04-01-recommendations"
+          class="help-section-block help-sub--recommendations"
+          data-help-section="sec-04-01-recommendations"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">4.1 Submenu 1: Replenishment Recommendations</h2>
+            <span class="help-section-code">ID: help-sec-04-01-recommendations</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              This screen is identical in both the Local POS App and the Web Cloud Manager.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Automatically calculates how fast each item is selling per day and warns you how many days of stock are left so you never run out of fast-moving items.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-04a-replenishment-recommendations">
+            <img
+              src="screenshots/sec-04a-replenishment-recommendations.png"
+              alt="Replenishment Recommendations Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 4.1: Supplier &amp; Replenishment &rarr; Replenishment Recommendations Submenu</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Table Column</th>
+                <th>What Data It Shows</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Item &amp; Category</strong></td>
+                <td>Product name and department (e.g., <em>Alphonso • Fruits</em>).</td>
+              </tr>
+              <tr>
+                <td><strong>Current Stock &amp; Daily Velocity</strong></td>
+                <td>How much stock you currently have (<code>96.0 kg</code>) and average daily sales speed (<code>~6 kg/day</code>).</td>
+              </tr>
+              <tr>
+                <td><strong>Days Left &amp; Status</strong></td>
+                <td>Estimated days before stock finishes (<code>16.0 days</code>) and badge: <strong>Critical</strong> (Red), <strong>Low Stock</strong> (Amber), or <strong>Optimal</strong> (Green).</td>
+              </tr>
+              <tr>
+                <td><strong>Action (+ Add to PO)</strong></td>
+                <td>Click <span class="help-ui-btn">+ Add to PO</span> on any item (or click <span class="help-ui-btn help-ui-btn--primary">Draft PO for All Critical Items</span>) to immediately prepare a purchase order for your supplier.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-04-01-recommendations] -->
+
+        <!-- [SECTION-START: help-sec-04-02-suppliers-master] -->
+        <article
+          id="help-sec-04-02-suppliers-master"
+          class="help-section-block help-sub--suppliers-master"
+          data-help-section="sec-04-02-suppliers-master"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">4.2 Submenu 2: Suppliers Master</h2>
+            <span class="help-section-code">ID: help-sec-04-02-suppliers-master</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Your supplier directory is shared and synced across both Local and Web apps.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Stores the contact details, phone numbers, delivery lead time, and payment terms of all your vendors (Mandi Traders, FMCG Distributors, Dairy Co-ops, and Farmer Groups).
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-04b-replenishment-suppliers">
+            <img
+              src="screenshots/sec-04b-replenishment-suppliers.png"
+              alt="Suppliers Master Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 4.2: Supplier &amp; Replenishment &rarr; Suppliers Master Directory</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                To add a new vendor, click the green button <span class="help-ui-btn">+ Add Supplier</span> at the top right.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Enter the Company Name, Contact Person, Phone Number, Market Type (e.g., <em>Mandi Trader</em>), Delivery Lead Time (in days), and Payment Terms (e.g., <em>Net 15</em> or <em>Cash on Delivery</em>), then click Save.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">3</span>
+              <div class="help-step-body">
+                On any supplier card, click <strong>Draft PO</strong> to order goods from that supplier, or <strong>Edit</strong> to update their contact details.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-04-02-suppliers-master] -->
+
+        <!-- [SECTION-START: help-sec-04-03-purchase-orders] -->
+        <article
+          id="help-sec-04-03-purchase-orders"
+          class="help-section-block help-sub--purchase-orders"
+          data-help-section="sec-04-03-purchase-orders"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">4.3 Submenu 3: Purchase Orders &amp; GRN (Receiving Goods into Stock)</h2>
+            <span class="help-section-code">ID: help-sec-04-03-purchase-orders</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Purchase orders and Goods Receipt Notes (GRN) work identically in both Local and Web apps.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Tracks every Purchase Order (PO) sent to suppliers. When the supplier truck arrives at your shop with the goods, you click <strong>Receive GRN</strong> on the PO to check the quantities and automatically add the received items into your store's live stock!
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-04c-replenishment-pos-grn">
+            <img
+              src="screenshots/sec-04c-replenishment-pos-grn.png"
+              alt="Purchase Orders and GRN Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 4.3: Supplier &amp; Replenishment &rarr; Purchase Orders &amp; GRN Tracking Table</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                <strong>Filter Orders:</strong> Use the status buttons (<code>ALL</code>, <code>ACTIVE</code>, <code>PARTIAL</code>, <code>FULFILLED</code>) or date filters (<code>Today</code>, <code>Last 7 Days</code>) to find any PO.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                <strong>Receive Delivery (GRN):</strong> When goods arrive, click <span class="help-ui-btn help-ui-btn--primary">Receive GRN</span> on that PO row. Enter the Supplier's Paper Invoice Number, verify the received quantity for each item, mark any damaged items as <em>Hold/Reject</em>, and click <strong>Confirm GRN &amp; Update Stock</strong>.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-04-03-purchase-orders] -->
+
+        <!-- [SECTION-START: help-sec-04-04-create-multi-po] -->
+        <article
+          id="help-sec-04-04-create-multi-po"
+          class="help-section-block help-sub--create-multi-po"
+          data-help-section="sec-04-04-create-multi-po"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">4.4 Creating a Multi-Item Purchase Order (<span class="help-ui-btn">Create Multi-Item PO</span>)</h2>
+            <span class="help-section-code">ID: help-sec-04-04-create-multi-po</span>
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-04d-replenishment-create-po">
+            <img
+              src="screenshots/sec-04d-replenishment-create-po.png"
+              alt="Create Multi-Item Purchase Order Modal"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 4.4: Create Multi-Item Purchase Order Modal</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn help-ui-btn--primary">Create Multi-Item PO</span> at the top right of the Supplier &amp; Replenishment screen.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Select the <strong>Supplier</strong> and <strong>Expected Delivery Date</strong>, search and add multiple products from your catalog, enter the order quantities and unit cost, and click <strong>Issue Purchase Order</strong>. You can also download a clean PDF to send to your supplier on WhatsApp!
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-04-04-create-multi-po] -->
+
+        <!-- [SECTION-START: help-sec-04-05-three-way-match] -->
+        <article
+          id="help-sec-04-05-three-way-match"
+          class="help-section-block help-sub--three-way-match"
+          data-help-section="sec-04-05-three-way-match"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">4.5 Submenu 4: 3-Way Invoice Matching</h2>
+            <span class="help-section-code">ID: help-sec-04-05-three-way-match</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              3-Way Invoice Matching is available identically on both your counter terminal and web manager.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Protects your store from paying extra when a supplier delivers fewer items than ordered or charges a higher rate on their bill. It compares 3 numbers side-by-side: <strong>1. PO Value (Ordered)</strong> vs. <strong>2. GRN Value (Actually Received)</strong> vs. <strong>3. Supplier Invoice Amount</strong>.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-04e-replenishment-3way-matching">
+            <img
+              src="screenshots/sec-04e-replenishment-3way-matching.png"
+              alt="3-Way Invoice Matching Submenu"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 4.5: Supplier &amp; Replenishment &rarr; 3-Way Invoice Matching Audit Screen</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Match Status</th>
+                <th>What It Means &amp; What Action to Take</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>MATCHED (Green)</strong></td>
+                <td>The supplier's bill matches the goods received 100%. Safe to release payment!</td>
+              </tr>
+              <tr>
+                <td><strong>DISCREPANCY / VARIANCE (Red/Amber)</strong></td>
+                <td>There is a difference between what you received and what the supplier billed. Click <strong>Approve Variance</strong> only after verifying or deducting the shortage amount.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-04-05-three-way-match] -->
+      </section>
+
+      <!-- =======================================================================
+           MODULE 5: STORE SALES ANALYTICS & REPORTS (mod-05-analytics) — SAME IN BOTH
+           ======================================================================= -->
+      <section id="help-mod-05-analytics" class="help-module help-mod--analytics" data-help-module="mod-05-analytics">
+        <div class="help-module-header">
+          <span class="help-module-header__eyebrow">MODULE 5 • BUSINESS INTELLIGENCE &amp; GST REPORTS (SHARED IN LOCAL &amp; WEB)</span>
+          <h1 class="help-module-header__title">5. Store Sales Analytics &amp; Reports (5 Submenus)</h1>
+          <p class="help-module-header__desc">
+            Track your store's daily sales, profit margins, busiest rush hours, item-by-item sales tables, and Mandi cost trends across any date period.
+          </p>
+        </div>
+
+        <!-- [SECTION-START: help-sec-05-01-executive-overview] -->
+        <article
+          id="help-sec-05-01-executive-overview"
+          class="help-section-block help-sub--executive-overview"
+          data-help-section="sec-05-01-executive-overview"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">5.1 Submenu 1: Executive Overview &amp; Footfall</h2>
+            <span class="help-section-code">ID: help-sec-05-01-executive-overview</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              All 5 Analytics submenus, period filters, and PDF/CSV exports work identically in both the Local App and Web App.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Gives you an instant health check of your store's revenue, average bill value, profit margin percentage, and hourly customer rush.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-05a-analytics-overview">
+            <img
+              src="screenshots/sec-05a-analytics-overview.png"
+              alt="Store Sales Analytics - Executive Overview and Footfall"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 5.1: Store Sales Analytics &rarr; Executive Overview &amp; Footfall Submenu</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Element / Card</th>
+                <th>What Data It Shows</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>ANALYTICS PERIOD Bar</strong></td>
+                <td>Switch between <strong>Today</strong>, <strong>Yesterday</strong>, <strong>Last 7 Days</strong>, <strong>Last 30 Days</strong>, or <strong>This Month</strong>. All numbers and charts update immediately.</td>
+              </tr>
+              <tr>
+                <td><strong>GMV (TOTAL SALES)</strong></td>
+                <td>Total gross sales value for the selected period (e.g., <code>Rs. 9,041.59</code>).</td>
+              </tr>
+              <tr>
+                <td><strong>AVG BASKET VALUE</strong></td>
+                <td>Average amount spent per customer bill (<code>Total Sales ÷ Total Bills</code>).</td>
+              </tr>
+              <tr>
+                <td><strong>AVG GROSS MARGIN</strong></td>
+                <td>Your net profit margin percentage after deducting item purchase cost.</td>
+              </tr>
+              <tr>
+                <td><strong>BILLS PROCESSED</strong></td>
+                <td>Total number of customer receipts printed during the selected period.</td>
+              </tr>
+              <tr>
+                <td><strong>Export Master Audit (PDF)</strong></td>
+                <td>Top-right blue button that downloads a complete, printable PDF audit report of your store's performance.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-05-01-executive-overview] -->
+
+        <!-- [SECTION-START: help-sec-05-02-itemwise-sales] -->
+        <article
+          id="help-sec-05-02-itemwise-sales"
+          class="help-section-block help-sub--itemwise-sales"
+          data-help-section="sec-05-02-itemwise-sales"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">5.2 Submenu 2: Item-Wise Period Sales (Period Matrix)</h2>
+            <span class="help-section-code">ID: help-sec-05-02-itemwise-sales</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              This item-wise matrix is identical in both your counter app and cloud dashboard.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Shows exactly how many kilograms, packets, or pieces of each individual product were sold day-by-day, week-by-week, or month-by-month, along with total revenue and profit per item.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-05b-analytics-itemwise">
+            <img
+              src="screenshots/sec-05b-analytics-itemwise.png"
+              alt="Item-Wise Period Sales Matrix"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 5.2: Store Sales Analytics &rarr; Item-Wise Period Sales Matrix</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+        </article>
+        <!-- [SECTION-END: help-sec-05-02-itemwise-sales] -->
+
+        <!-- [SECTION-START: help-sec-05-03-category-sales] -->
+        <article
+          id="help-sec-05-03-category-sales"
+          class="help-section-block help-sub--category-sales"
+          data-help-section="sec-05-03-category-sales"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">5.3 Submenu 3: Category-Wise Sales Report</h2>
+            <span class="help-section-code">ID: help-sec-05-03-category-sales</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Identical department breakdown in both Local and Web apps.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Summarizes total sales, units sold, share of revenue (%), and profit margin for each store department (<em>Fruits</em>, <em>Vegetables</em>, <em>Dairy</em>, <em>Groceries</em>, <em>Beverages</em>, <em>Snacks</em>) so you know which section brings the highest profit.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-05c-analytics-category">
+            <img
+              src="screenshots/sec-05c-analytics-category.png"
+              alt="Category-Wise Sales Report"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 5.3: Store Sales Analytics &rarr; Category-Wise Sales Report</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+        </article>
+        <!-- [SECTION-END: help-sec-05-03-category-sales] -->
+
+        <!-- [SECTION-START: help-sec-05-04-period-sales] -->
+        <article
+          id="help-sec-05-04-period-sales"
+          class="help-section-block help-sub--period-sales"
+          data-help-section="sec-05-04-period-sales"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">5.4 Submenu 4: Period-Wise Sales Report</h2>
+            <span class="help-section-code">ID: help-sec-05-04-period-sales</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Identical date-wise accounting report in both Local and Web apps.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Provides a clean date-by-date table showing total bills, gross sales, GST tax collected, net sales, and profit for your accountant or tax filing.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-05d-analytics-period">
+            <img
+              src="screenshots/sec-05d-analytics-period.png"
+              alt="Period-Wise Sales Report"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 5.4: Store Sales Analytics &rarr; Period-Wise Sales Report</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+        </article>
+        <!-- [SECTION-END: help-sec-05-04-period-sales] -->
+
+        <!-- [SECTION-START: help-sec-05-05-mandi-trends] -->
+        <article
+          id="help-sec-05-05-mandi-trends"
+          class="help-section-block help-sub--mandi-trends"
+          data-help-section="sec-05-05-mandi-trends"
+          data-app-scope="both-local-and-web"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">5.5 Submenu 5: Mandi Rate Trends &amp; Margin Protection</h2>
+            <span class="help-section-code">ID: help-sec-05-05-mandi-trends</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--both">
+            <span class="help-scope-banner__icon">&#127760;&#128187;</span>
+            <div>
+              <span class="help-scope-banner__title">SAME IN BOTH LOCAL APP &amp; WEB APP (pospro.plannestapp.com)</span>
+              Available identically in both Local and Web apps.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Fresh vegetable and fruit wholesale (Mandi) prices change every morning. This screen compares your wholesale buying cost against your retail selling price and alerts you if any item's profit margin drops too low.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-05e-analytics-mandi-trends">
+            <img
+              src="screenshots/sec-05e-analytics-mandi-trends.png"
+              alt="Mandi Rate Trends and Margin Report"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 5.5: Store Sales Analytics &rarr; Mandi Rate Trends &amp; Margin Analysis</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+        </article>
+        <!-- [SECTION-END: help-sec-05-05-mandi-trends] -->
+      </section>
+
+      <!-- =======================================================================
+           MODULE 6: PERIPHERALS & HARDWARE (mod-06-peripherals) — LOCAL ONLY
+           ======================================================================= -->
+      <section id="help-mod-06-peripherals" class="help-module help-mod--peripherals" data-help-module="mod-06-peripherals">
+        <div class="help-module-header">
+          <span class="help-module-header__eyebrow">MODULE 6 • COUNTER HARDWARE SETUP (LOCAL APP EXCLUSIVE)</span>
+          <h1 class="help-module-header__title">6. Peripherals &amp; Hardware Menu (3 Active Submenus)</h1>
+          <p class="help-module-header__desc">
+            Connect and test the physical machines plugged into your billing counter computer: your Digital Weighing Scale, Thermal Receipt &amp; Barcode Sticker Printers, and USB Barcode Scanner.
+          </p>
+        </div>
+
+        <!-- [SECTION-START: help-sec-06-01-weighing-scale] -->
+        <article
+          id="help-sec-06-01-weighing-scale"
+          class="help-section-block help-sub--weighing-scale"
+          data-help-section="sec-06-01-weighing-scale"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">6.1 Submenu 1: 4. Weighing Scale (Baud Setup &amp; Live Stream)</h2>
+            <span class="help-section-code">ID: help-sec-06-01-weighing-scale</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--local">
+            <span class="help-scope-banner__icon">&#128421;</span>
+            <div>
+              <span class="help-scope-banner__title">LOCAL COUNTER APP EXCLUSIVE</span>
+              Hardware peripherals are configured only in the Local POS App because scales, printers, and scanners are physically plugged into each counter computer via USB/Serial cables.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Connects your electronic tabletop weighing scale (Essae, Phoenix, CAS, Sansui, etc.) to the computer so that when you place fruits or vegetables on the scale pan, the exact weight appears automatically on the billing screen.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-06a-peripherals-scale">
+            <img
+              src="screenshots/sec-06a-peripherals-scale.png"
+              alt="Peripherals and Hardware - Weighing Scale Configuration"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 6.1: Peripherals &amp; Hardware &rarr; 4. Weighing Scale Configuration &amp; Live Weight Readout</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Plug your weighing scale's RS232-to-USB cable into the counter computer.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Click the green button <span class="help-ui-btn help-ui-btn--primary">Connect WebSerial COM Port</span>, select the USB Serial Port from the popup, and click Connect.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">3</span>
+              <div class="help-step-body">
+                Place any item on the scale pan—you will see the big green numbers (<code>0.000 KG</code>) change live! Click <span class="help-ui-btn">Zero Scale</span> (or press <span class="help-ui-kbd">F6</span>) anytime to tare an empty bowl or tray.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-06-01-weighing-scale] -->
+
+        <!-- [SECTION-START: help-sec-06-02-receipt-printer] -->
+        <article
+          id="help-sec-06-02-receipt-printer"
+          class="help-section-block help-sub--receipt-printer"
+          data-help-section="sec-06-02-receipt-printer"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">6.2 Submenu 2: 5. Receipt &amp; Barcode Sticker Printers</h2>
+            <span class="help-section-code">ID: help-sec-06-02-receipt-printer</span>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Lets you select two separate Windows printers independently:
+            <br />1. <strong>Customer Receipt &amp; Billing Printer</strong> (80mm or 58mm thermal slip printer for bills).
+            <br />2. <strong>Barcode &amp; Price Label Sticker Printer</strong> (TSC / Zebra / TVS label printer for sticking barcodes on your store packets).
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-06b-peripherals-printer">
+            <img
+              src="screenshots/sec-06b-peripherals-printer.png"
+              alt="Peripherals and Hardware - Dual Printer Configuration"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 6.2: Peripherals &amp; Hardware &rarr; 5. Dual Receipt &amp; Barcode Label Printer Setup</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Under <strong>1. Customer Receipt &amp; Billing Printer</strong>, choose your thermal printer from the dropdown (e.g., <em>RETSOL RTP-80</em> or <em>EPSON TM-T82</em>) and select your paper roll width (<code>80mm</code> or <code>58mm</code>). Click <span class="help-ui-btn help-ui-btn--primary">Test Print Receipt</span> to verify.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Under <strong>2. Barcode &amp; Price Label Sticker Printer</strong>, select your sticker printer and sticker size (e.g., <code>50mm × 25mm</code>) and click <span class="help-ui-btn">Test Label Printer</span>.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-06-02-receipt-printer] -->
+
+        <!-- [SECTION-START: help-sec-06-03-barcode-scanner] -->
+        <article
+          id="help-sec-06-03-barcode-scanner"
+          class="help-section-block help-sub--barcode-scanner"
+          data-help-section="sec-06-03-barcode-scanner"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">6.3 Submenu 3: 3. Barcode Scanner Setup</h2>
+            <span class="help-section-code">ID: help-sec-06-03-barcode-scanner</span>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this submenu for?</strong> Verifies that your handheld or tabletop USB/Bluetooth 1D/2D barcode gun is active in hands-free "Keyboard Wedge" mode.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-06c-peripherals-scanner">
+            <img
+              src="screenshots/sec-06c-peripherals-scanner.png"
+              alt="Peripherals and Hardware - Barcode Scanner Setup"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 6.3: Peripherals &amp; Hardware &rarr; 3. Barcode Scanner Setup &amp; Test</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-steps-list">
+            <div class="help-step-card">
+              <span class="help-step-num">1</span>
+              <div class="help-step-body">
+                Plug your USB barcode scanner into any USB port on your computer. No special driver is needed.
+              </div>
+            </div>
+            <div class="help-step-card">
+              <span class="help-step-num">2</span>
+              <div class="help-step-body">
+                Click <span class="help-ui-btn help-ui-btn--primary">Test Barcode Scanner [F4]</span> and scan any product packet to verify the beep and code readout.
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-06-03-barcode-scanner] -->
+      </section>
+
+      <!-- =======================================================================
+           MODULE 7: WEB APP MACHINE LOCK & KEYBOARD SHORTCUTS (mod-07-web-and-shortcuts)
+           ======================================================================= -->
+      <section id="help-mod-07-web-and-shortcuts" class="help-module help-mod--web-and-shortcuts" data-help-module="mod-07-web-and-shortcuts">
+        <div class="help-module-header">
+          <span class="help-module-header__eyebrow">MODULE 7 • WEB CLOUD LICENSE LOCK &amp; QUICK KEYBOARD SHORTCUTS</span>
+          <h1 class="help-module-header__title">7. Web Machine License Lock &amp; Cashier Shortcut Keys</h1>
+          <p class="help-module-header__desc">
+            How to manage your store's single-machine hardware lock in the Web Cloud Manager (pospro.plannestapp.com) and the function keys every cashier should know.
+          </p>
+        </div>
+
+        <!-- [SECTION-START: help-sec-07-01-machine-license] -->
+        <article
+          id="help-sec-07-01-machine-license"
+          class="help-section-block help-sub--machine-license"
+          data-help-section="sec-07-01-machine-license"
+          data-app-scope="web-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">7.1 Web App Only: Terminal App Downloads &amp; Machine License Lock</h2>
+            <span class="help-section-code">ID: help-sec-07-01-machine-license</span>
+          </div>
+
+          <div class="help-scope-banner help-scope-banner--web">
+            <span class="help-scope-banner__icon">&#9729;&#65039;</span>
+            <div>
+              <span class="help-scope-banner__title">WEB CLOUD MANAGER EXCLUSIVE (pospro.plannestapp.com)</span>
+              This tab appears only in your online Web Cloud Manager under <strong>TERMINAL APP &amp; DOWNLOADS</strong>.
+            </div>
+          </div>
+
+          <div class="help-purpose-box">
+            <strong>What is this screen for?</strong> Your Plannest POS license key (e.g., <code>PLN-WIN-1FCJ-2026</code>) is locked to your billing counter computer's hardware MAC/UUID so nobody can copy and run your software on an unauthorized computer.
+          </div>
+
+          <figure class="help-screenshot-card" id="fig-sec-07-web-machine-license">
+            <img
+              src="screenshots/sec-07-web-machine-license.png"
+              alt="Machine License and Hardware Lock in Web Cloud Manager"
+              class="help-screenshot-img"
+              onclick="openLightbox(this.src)"
+            />
+            <figcaption class="help-screenshot-caption">
+              <span>Screen 7.1: Machine License &amp; Hardware Lock (MAC / UUID) in Web Cloud Manager</span>
+              <span>Click image to enlarge &#128269;</span>
+            </figcaption>
+          </figure>
+
+          <div class="help-callout help-callout--tip">
+            <strong>When should you click "Reset Machine Lock"?</strong><br />
+            If your billing counter PC breaks down or you buy a new computer for your shop, log into <strong>pospro.plannestapp.com</strong>, open <strong>Terminal App &amp; Downloads</strong>, and click <strong>Reset Machine Lock</strong>. This unbinds your old computer so that the next computer where you install and activate Plannest POS automatically claims your license! (Note: Once reset, the old computer will no longer be authorized.)
+          </div>
+        </article>
+        <!-- [SECTION-END: help-sec-07-01-machine-license] -->
+
+        <!-- [SECTION-START: help-sec-07-02-keyboard-shortcuts] -->
+        <article
+          id="help-sec-07-02-keyboard-shortcuts"
+          class="help-section-block help-sub--keyboard-shortcuts"
+          data-help-section="sec-07-02-keyboard-shortcuts"
+          data-app-scope="local-only"
+        >
+          <div class="help-section-header">
+            <h2 class="help-section-title">7.2 Quick Hardware Function Keys &amp; Everyday Troubleshooting</h2>
+            <span class="help-section-code">ID: help-sec-07-02-keyboard-shortcuts</span>
+          </div>
+
+          <table class="help-data-table">
+            <thead>
+              <tr>
+                <th>Keyboard Key</th>
+                <th>Action Performed</th>
+                <th>When to Use It</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="help-ui-kbd">F12</span></td>
+                <td><strong>Proceed to Pay / Checkout</strong></td>
+                <td>Press as soon as you finish scanning items to open the payment window.</td>
+              </tr>
+              <tr>
+                <td><span class="help-ui-kbd">F2</span></td>
+                <td><strong>Open Numpad SKU Entry</strong></td>
+                <td>Press to type a 4-digit item SKU code and weight using the number pad.</td>
+              </tr>
+              <tr>
+                <td><span class="help-ui-kbd">F6</span></td>
+                <td><strong>Zero / Tare Weighing Scale</strong></td>
+                <td>Press to reset the electronic weighing scale readout to <code>0.000 kg</code>.</td>
+              </tr>
+              <tr>
+                <td><span class="help-ui-kbd">F7</span></td>
+                <td><strong>Duplicate Bill / Past Receipts</strong></td>
+                <td>Press to find and reprint an earlier customer receipt.</td>
+              </tr>
+              <tr>
+                <td><span class="help-ui-kbd">Ctrl + B</span></td>
+                <td><strong>Show / Hide Left Menu Sidebar</strong></td>
+                <td>Press to hide the left navigation menu and give maximum space to product cards.</td>
+              </tr>
+              <tr>
+                <td><span class="help-ui-kbd">ESC</span></td>
+                <td><strong>Close Any Popup Window</strong></td>
+                <td>Press to close any open modal or cancel checkout and return to the billing screen.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+        <!-- [SECTION-END: help-sec-07-02-keyboard-shortcuts] -->
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Lightbox Modal for Enlarging Any Screenshot -->
+  <div class="help-lightbox" id="help-lightbox" onclick="closeLightbox()">
+    <img id="help-lightbox-img" src="" alt="Enlarged Screenshot" />
+  </div>
+
+  <script>
+    function openLightbox(src) {
+      var lb = document.getElementById('help-lightbox');
+      var img = document.getElementById('help-lightbox-img');
+      img.src = src;
+      lb.classList.add('open');
+    }
+
+    function closeLightbox() {
+      var lb = document.getElementById('help-lightbox');
+      lb.classList.remove('open');
+    }
+
+    // Live Search Filter across modular sections
+    function filterHelpSections(query) {
+      var q = (query || '').trim().toLowerCase();
+      var sections = document.querySelectorAll('.help-section-block');
+      sections.forEach(function (sec) {
+        if (!q) {
+          sec.style.display = '';
+          return;
+        }
+        var text = (sec.innerText || '').toLowerCase();
+        sec.style.display = text.indexOf(q) !== -1 ? '' : 'none';
+      });
+    }
+
+    // Active Sidebar Link Highlighting on Scroll
+    window.addEventListener('scroll', function () {
+      var sections = document.querySelectorAll('.help-section-block');
+      var navLinks = document.querySelectorAll('.help-nav-child');
+      var currentId = '';
+      sections.forEach(function (sec) {
+        var rect = sec.getBoundingClientRect();
+        if (rect.top <= 150) {
+          currentId = sec.id;
+        }
+      });
+      if (currentId) {
+        navLinks.forEach(function (link) {
+          if (link.getAttribute('href') === '#' + currentId) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
