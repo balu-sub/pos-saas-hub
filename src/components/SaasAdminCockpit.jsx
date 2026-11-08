@@ -153,25 +153,64 @@ export default function SaasAdminCockpit({ onLogout }) {
 
       if (updErr) throw updErr;
 
-      // 3. Upsert admin user in Windows_users for pospro login
+      // 3. Provision admin user and outlet profile for pospro login
       try {
-        await supabase.from('Windows_users').upsert([
-          {
-            id: `admin_${st.id}`,
-            store_id: st.id,
-            name: st.bill_config?.owner_name || st.name,
-            pin: cleanPass,
-            role: 'Admin (Full Access & User Mgmt)',
-            role_title: 'Store Owner / General Manager',
-            user_role: 'Admin',
-            email: st.bill_config?.owner_email || '',
-            phone: st.phone || '',
-            initials: (st.bill_config?.owner_name || st.name || 'SO').substring(0, 2).toUpperCase(),
-            status: 'active',
-          }
-        ], { onConflict: 'id' });
+        const adminPayload = {
+          id: `usr_${st.id}_admin`,
+          store_id: st.id,
+          name: st.bill_config?.owner_name || st.name,
+          pin: cleanPass,
+          role: 'Admin (Full Access & User Mgmt)',
+          role_title: 'Store Owner / General Manager',
+          user_role: 'Admin',
+          email: st.bill_config?.owner_email || '',
+          phone: st.phone || '',
+          initials: (st.bill_config?.owner_name || st.name || 'SO').substring(0, 2).toUpperCase(),
+          status: 'active',
+        };
+
+        const { data: exUsers } = await supabase.from('Windows_users').select('id').eq('store_id', st.id);
+        if (exUsers && exUsers.length > 0) {
+          await supabase.from('Windows_users').update(adminPayload).eq('id', exUsers[0].id);
+        } else {
+          await supabase.from('Windows_users').insert([adminPayload]);
+        }
+
+        const { data: exProf } = await supabase.from('Windows_outlet_profile').select('id').eq('store_id', st.id);
+        if (!exProf || exProf.length === 0) {
+          await supabase.from('Windows_outlet_profile').insert([
+            {
+              id: `outlet_${st.id}`,
+              store_id: st.id,
+              outlet_name: st.name,
+              branch_name: 'Main Counter',
+              address_line1: st.address_line1 || '',
+              city: st.address_line1 || 'Chennai',
+              state: 'Tamil Nadu',
+              pincode: '600001',
+              phone: st.phone || '',
+              email: st.bill_config?.owner_email || '',
+              receipt_header_note: `${st.name.toUpperCase()} - BILLING COUNTER`,
+              receipt_footer_note: 'Thank you for shopping with us! Visit again.',
+              return_terms: 'Goods once sold can be exchanged within 24 hours with original bill receipt.',
+              bill_prefix: st.bill_prefix || 'INV-',
+              bill_start_number: 1001,
+              bill_increment_step: 1,
+              bill_number_padding: 4,
+              print_branch: 1,
+              print_address: 1,
+              print_phone: 1,
+              print_email: 0,
+              print_gstin: 1,
+              print_pan: 0,
+              print_fssai: 1,
+              print_header_note: 1,
+              print_return_terms: 1,
+            },
+          ]);
+        }
       } catch (userErr) {
-        console.warn('Windows_users sync notice:', userErr);
+        console.warn('Windows_users / profile sync notice:', userErr);
       }
 
       // 4. Prepare email text with Store ID and Password

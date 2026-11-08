@@ -170,6 +170,58 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
 
       if (storeErr) throw storeErr;
 
+      // Automatically provision the store's initial outlet profile & admin user in Supabase
+      try {
+        await supabase.from('Windows_outlet_profile').insert([
+          {
+            id: `outlet_${generatedId}`,
+            store_id: generatedId,
+            outlet_name: newStore.businessName.trim(),
+            branch_name: 'Main Counter',
+            address_line1: newStore.city.trim(),
+            city: newStore.city.trim(),
+            state: 'Tamil Nadu',
+            pincode: '600001',
+            phone: newStore.phone.trim(),
+            email: newStore.email.trim(),
+            receipt_header_note: `${newStore.businessName.trim().toUpperCase()} - BILLING COUNTER`,
+            receipt_footer_note: 'Thank you for shopping with us! Visit again.',
+            return_terms: 'Goods once sold can be exchanged within 24 hours with original bill receipt.',
+            bill_prefix: 'INV-',
+            bill_start_number: 1001,
+            bill_increment_step: 1,
+            bill_number_padding: 4,
+            print_branch: 1,
+            print_address: 1,
+            print_phone: 1,
+            print_email: 0,
+            print_gstin: 1,
+            print_pan: 0,
+            print_fssai: 1,
+            print_header_note: 1,
+            print_return_terms: 1,
+          },
+        ]);
+
+        await supabase.from('Windows_users').insert([
+          {
+            id: `usr_${generatedId}_admin`,
+            store_id: generatedId,
+            name: newStore.ownerName.trim() || 'Store Owner',
+            pin: '1234',
+            role: 'Admin (Full Access & User Mgmt)',
+            role_title: 'Store Owner / General Manager',
+            user_role: 'Admin',
+            email: newStore.email.trim(),
+            phone: newStore.phone.trim(),
+            initials: (newStore.ownerName.trim() || 'SO').substring(0, 2).toUpperCase(),
+            status: 'active',
+          },
+        ]);
+      } catch (provisionErr) {
+        console.warn('Initial store provisioning notice:', provisionErr);
+      }
+
       // Show success screen with instructions
       setRegisteredStore({
         id: generatedId,
