@@ -1611,21 +1611,45 @@ Need support? Reply to this email or contact Plannest Support.`;
 
         {/* TAB 5: RELEASES */}
         {activeTab === 'releases' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-              <h3 className="font-bold text-slate-900 text-sm">Windows POS Terminal</h3>
-              <div className="text-2xl font-black text-slate-900 font-mono mt-1">v1.0.0 Stable</div>
-              <p className="text-xs text-slate-500 mt-1">Offline-first local SQLite engine</p>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-slate-900 text-sm">Windows POS Terminal</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase">Live OTA</span>
+                </div>
+                <div className="text-2xl font-black text-slate-900 font-mono mt-1">v1.2.0 Stable</div>
+                <p className="text-xs text-slate-500 mt-1">Published 2026-11-09 • Auto-broadcasting to all connected terminals</p>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+                <h3 className="font-bold text-slate-900 text-sm">CrowPanel ESP32 Firmware</h3>
+                <div className="text-2xl font-black text-slate-900 font-mono mt-1">v1.0.4 Stable</div>
+                <p className="text-xs text-slate-500 mt-1">CrowPanel 7.0" ESP32-S3</p>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+                <h3 className="font-bold text-slate-900 text-sm">Cloud Manager Portal</h3>
+                <div className="text-2xl font-black text-slate-900 font-mono mt-1">pospro / poslite</div>
+                <p className="text-xs text-slate-500 mt-1">Cloudflare Pages Edge</p>
+              </div>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-              <h3 className="font-bold text-slate-900 text-sm">CrowPanel ESP32 Firmware</h3>
-              <div className="text-2xl font-black text-slate-900 font-mono mt-1">v1.0.4 Stable</div>
-              <p className="text-xs text-slate-500 mt-1">CrowPanel 7.0" ESP32-S3</p>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-              <h3 className="font-bold text-slate-900 text-sm">Cloud Manager Portal</h3>
-              <div className="text-2xl font-black text-slate-900 font-mono mt-1">pospro / poslite</div>
-              <p className="text-xs text-slate-500 mt-1">Cloudflare Pages Edge</p>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-black text-slate-900 text-sm">v1.2.0 Release Notes (Broadcast via /version.json &amp; /plannest-terminal.zip)</h4>
+                <a
+                  href="/version.json"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1"
+                >
+                  <span>Inspect version.json</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+              <ul className="text-xs text-slate-700 space-y-1.5 list-disc pl-5">
+                <li><strong>End-of-Day Z-Report Auto-PDF &amp; 80mm Thermal Slip Preview:</strong> Closing a shift now automatically downloads the A4 Z-Report PDF to the cashier's Downloads folder, opens an instant 80mm thermal slip preview for printing, and archives all past shifts in the Saved Z-Reports Archive table.</li>
+                <li><strong>Comprehensive Operator Help &amp; User Guide:</strong> Full step-by-step interactive manual (<code>/help/index.html</code>) accessible from the Help / Guide menu.</li>
+                <li><strong>India Legal Terms &amp; Hardware License Lock:</strong> Built-in India POS Terms &amp; Conditions and cryptographic machine UUID license binding.</li>
+              </ul>
             </div>
           </div>
         )}

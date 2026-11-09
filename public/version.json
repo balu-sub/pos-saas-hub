@@ -1,7 +1,7 @@
 {
-  "version": "1.1.9",
+  "version": "1.2.0",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Brand-Agnostic Generic Prefixes: Completely replaced all legacy alfa references with future-proof generic pos_ keys.\n2. Genuine Hardware Detection: Footer peripherals status now accurately verifies physical devices (RETSOL thermal printer, Web Serial weighing scale, HID scanner) with live diagnostics.\n3. Strictly Real Data: Purged all synthetic fallbacks, dummy hourly multipliers, and auto-seeded sample POs/customers.",
+  "releaseNotes": "1. End-of-Day Z-Report Auto-PDF & 80mm Thermal Slip Preview: Closing a shift now automatically downloads the A4 Z-Report PDF to your Downloads folder, opens an instant 80mm thermal slip preview for printing, and archives all past shifts in the Saved Z-Reports Archive table.\n2. Comprehensive Operator Help & User Guide: Full step-by-step interactive manual (/help/index.html) accessible from the Help / Guide menu.\n3. India Legal Terms & Hardware License Lock: Built-in India POS Terms & Conditions and cryptographic machine UUID license binding.",
   "downloadUrl": "https://pos.plannestapp.com/plannest-terminal.zip",
-  "publishedAt": "2026-11-07"
+  "publishedAt": "2026-11-09"
 }
