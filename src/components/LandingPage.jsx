@@ -742,6 +742,25 @@ export default function LandingPage({ onOpenAuth }) {
             <span>•</span>
             <span>pos.plannestapp.com</span>
           </div>
+          <div className="flex items-center gap-4">
+            <a
+              href="/help/index.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-600 hover:text-[#00478c] font-semibold underline"
+            >
+              Operator Help &amp; User Guide
+            </a>
+            <span>•</span>
+            <a
+              href="/help/index.html#help-mod-08-terms-conditions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-600 hover:text-[#00478c] font-semibold underline"
+            >
+              Terms &amp; Conditions (India)
+            </a>
+          </div>
           <p>© 2026 Plannest Systems. All rights reserved.</p>
         </div>
       </footer>

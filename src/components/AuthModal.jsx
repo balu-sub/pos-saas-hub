@@ -39,6 +39,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
     apptype: 'windows',
     counterCount: 1,
     machineId: '',
+    agreedTerms: false,
   });
 
   // Success state after submitting registration
@@ -136,6 +137,10 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
     e.preventDefault();
     if (!newStore.businessName.trim() || !newStore.email.trim()) {
       setErrorMsg('Please fill in both your Store Name and Email Address.');
+      return;
+    }
+    if (!newStore.agreedTerms) {
+      setErrorMsg('Please read and agree to the Terms & Conditions (India) before registering.');
       return;
     }
 
@@ -555,6 +560,28 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                     If known, enter your counter PC's MAC address or Computer UUID. If blank, our 1-click installer detects it automatically.
                   </span>
                 </div>
+
+                <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={Boolean(newStore.agreedTerms)}
+                    onChange={(e) => setNewStore({ ...newStore, agreedTerms: e.target.checked })}
+                    className="mt-0.5 rounded text-[#00478c] focus:ring-[#00478c]"
+                  />
+                  <span className="text-[11px] text-slate-700 leading-snug">
+                    I have read and agree to the{' '}
+                    <a
+                      href="/help/index.html#help-mod-08-terms-conditions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#00478c] font-bold underline"
+                    >
+                      Plannest Retail POS Terms &amp; Conditions and Software License Agreement (India)
+                    </a>
+                    .
+                  </span>
+                </label>
 
                 <button
                   type="submit"
