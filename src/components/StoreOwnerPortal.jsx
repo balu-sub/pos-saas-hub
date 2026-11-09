@@ -229,8 +229,9 @@ export default function StoreOwnerPortal({ session, onLogout }) {
               </div>
 
               <a
-                href="/PlannestPOS-Setup.exe"
-                download="PlannestPOS-Setup.exe"
+                href="https://xcrndfislsbxzzkfrawp.supabase.co/storage/v1/object/public/pos-releases/PlannestPOS-Setup.exe"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="px-5 py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center gap-2 shrink-0 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
