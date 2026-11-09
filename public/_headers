@@ -1,6 +1,14 @@
-/plannest-terminal.zip
-  Cache-Control: no-cache, no-store, must-revalidate
-/PlannestPOS-Setup.exe
-  Cache-Control: no-cache, no-store, must-revalidate
 /version.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/plannest-terminal.zip
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/PlannestPOS-Setup.exe
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
   Cache-Control: no-cache, no-store, must-revalidate
