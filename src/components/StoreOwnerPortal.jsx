@@ -31,6 +31,20 @@ export default function StoreOwnerPortal({ session, onLogout }) {
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
+  const [versionInfo, setVersionInfo] = useState({
+    version: '1.2.0',
+    publishedAt: '2026-11-09',
+    releaseNotes: '',
+  });
+
+  useEffect(() => {
+    fetch('/version.json?_t=' + Date.now())
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.version) setVersionInfo(data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch license for this store from Supabase
   const fetchLicense = async () => {
@@ -182,16 +196,25 @@ export default function StoreOwnerPortal({ session, onLogout }) {
                 </p>
               </div>
 
-              <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                Windows 10 / 11 64-bit Ready
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-mono font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Latest Version: v{versionInfo.version}</span>
+                </span>
+                <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                  Windows 10 / 11 64-bit Ready
+                </span>
+              </div>
             </div>
 
             {/* Graphical Windows Installer Download Card */}
-            <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50/60 rounded-2xl border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
+            <div className="p-6 bg-gradient-to-r from-blue-50 via-indigo-50/40 to-slate-50 rounded-2xl border border-blue-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-slate-900 text-sm">Plannest POS Windows Installer</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    v{versionInfo.version} Latest
+                  </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#00478c]">
                     PlannestPOS-Setup.exe
                   </span>
@@ -199,6 +222,10 @@ export default function StoreOwnerPortal({ session, onLogout }) {
                 <p className="text-xs text-slate-600 max-w-lg">
                   Single-click graphical installer. Double-click to run, choose your install folder, enter your License Key, and it automatically binds your computer's MAC address, creates a Desktop Icon, and launches checkout!
                 </p>
+                <div className="text-[11px] text-slate-500 flex items-center gap-2 pt-0.5">
+                  <span className="font-semibold text-slate-700">Release Notes (v{versionInfo.version}):</span>
+                  <span>End-of-Day Z-Report Auto-PDF, 80mm Slip Preview, Scale Weight Lock, User Help Guide</span>
+                </div>
               </div>
 
               <a
@@ -207,7 +234,10 @@ export default function StoreOwnerPortal({ session, onLogout }) {
                 className="px-5 py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center gap-2 shrink-0 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
-                <span>Download Windows Installer (.exe)</span>
+                <div className="text-left">
+                  <div>Download Windows Installer (.exe)</div>
+                  <div className="text-[10px] text-blue-200 font-normal">v{versionInfo.version} • Offline Retail Core</div>
+                </div>
               </a>
             </div>
 
