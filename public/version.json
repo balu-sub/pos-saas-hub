@@ -2,6 +2,6 @@
   "version": "1.2.0",
   "minRequiredVersion": "1.0.0",
   "releaseNotes": "1. End-of-Day Z-Report Auto-PDF & 80mm Thermal Slip Preview: Closing a shift now automatically downloads the A4 Z-Report PDF to your Downloads folder, opens an instant 80mm thermal slip preview for printing, and archives all past shifts in the Saved Z-Reports Archive table.\n2. Comprehensive Operator Help & User Guide: Full step-by-step interactive manual (/help/index.html) accessible from the Help / Guide menu.\n3. India Legal Terms & Hardware License Lock: Built-in India POS Terms & Conditions and cryptographic machine UUID license binding.",
-  "downloadUrl": "https://xcrndfislsbxzzkfrawp.supabase.co/storage/v1/object/public/pos-releases/plannest-terminal.zip",
+  "downloadUrl": "https://res.cloudinary.com/ddyuidbkf/raw/upload/pospro_Plannestapp/Help_png/plannest-terminal.zip",
   "publishedAt": "2026-11-09"
 }
