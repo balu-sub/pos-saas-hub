@@ -1,7 +1,7 @@
 {
-  "version": "1.2.4",
+  "version": "1.2.5",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Multi-Slab GST Percentage Breakdown: Register cart summary and thermal receipts now itemize each GST slab separately (e.g. 5%, 12%, 18%, 28%) instead of a hardcoded 5% label, and local product add/edit persists GST & active status in SQLite.\n2. Cloud Store Manager Catalog Parity: Added Brand, SKU Code, Low Stock Alert, GST Tax Slab, Upload File photo support, and styled Delete Confirmation modal on pospro.plannestapp.com matching the local POS app.",
+  "releaseNotes": "1. Accurate Peripheral Status Counter: Footer and Peripherals Manager now count only the 3 active hardware devices (Scanner, Scale, Printer -> 3/3 Active) while AI Camera, AI Voice, and Cash Drawer remain paused for a later release.",
   "downloadUrl": "https://res.cloudinary.com/ddyuidbkf/raw/upload/v1794364489/pospro_Plannestapp/Help_png/plannest-terminal.zip",
   "publishedAt": "2026-11-11"
 }
