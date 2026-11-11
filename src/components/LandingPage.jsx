@@ -300,7 +300,7 @@ export default function LandingPage({ onOpenAuth }) {
                     <div>
                       <h3 className="text-base font-extrabold text-emerald-950">Demonstration Request Submitted!</h3>
                       <p className="text-xs text-emerald-800">
-                        Thank you! We have logged your store specification. Our technical specialist will contact you with pricing and schedule your live trial.
+                        Thank you! We have logged your store specification. Our technical specialist will contact you with pricing and schedule your live demonstration.
                       </p>
                     </div>
                   </div>
@@ -649,8 +649,8 @@ export default function LandingPage({ onOpenAuth }) {
                       3
                     </div>
                     <div>
-                      <strong className="text-slate-900 block font-bold">Free Live Demonstration &amp; Trial</strong>
-                      <span className="text-slate-500">Test the lightning-fast offline billing terminal on your computer before making any commitment.</span>
+                      <strong className="text-slate-900 block font-bold">Free Live Demonstration</strong>
+                      <span className="text-slate-500">Experience a live walkthrough of the lightning-fast offline billing terminal before making any commitment.</span>
                     </div>
                   </li>
                 </ul>
