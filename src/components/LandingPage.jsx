@@ -44,7 +44,7 @@ export default function LandingPage({ onOpenAuth }) {
     city: '',
     storeType: 'Supermarket & Grocery',
     counterCount: '1 Counter',
-    hardwareRequirements: ['Windows POS Terminal', '80mm Thermal Printer'],
+    hardwareRequirements: ['Windows POS Terminal (Local PC)', '80mm Thermal Receipt Printer'],
     notes: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,7 +73,7 @@ export default function LandingPage({ onOpenAuth }) {
         throw new Error('Please fill in your name, store name, and contact phone number.');
       }
 
-      const inquiryId = `INQ-${Date.now().toString().slice(-5)}`;
+      const inquiryId = `INQ-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
       const { error } = await supabase.from('stores').insert([
         {
           id: inquiryId,
@@ -389,7 +389,7 @@ export default function LandingPage({ onOpenAuth }) {
                           city: '',
                           storeType: 'Supermarket & Grocery',
                           counterCount: '1 Counter',
-                          hardwareRequirements: ['Windows POS Terminal', '80mm Thermal Printer'],
+                          hardwareRequirements: ['Windows POS Terminal (Local PC)', '80mm Thermal Receipt Printer'],
                           notes: '',
                         });
                       }}
@@ -561,7 +561,6 @@ export default function LandingPage({ onOpenAuth }) {
                         return (
                           <label
                             key={hw}
-                            onClick={() => handleCheckboxToggle(hw)}
                             className={`flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer select-none transition ${
                               checked
                                 ? 'bg-blue-50/60 border-blue-300 text-slate-900 font-semibold'
@@ -571,7 +570,7 @@ export default function LandingPage({ onOpenAuth }) {
                             <input
                               type="checkbox"
                               checked={checked}
-                              onChange={() => {}}
+                              onChange={() => handleCheckboxToggle(hw)}
                               className="rounded text-[#00478c] focus:ring-0"
                             />
                             <span className="text-[11px]">{hw}</span>
@@ -620,7 +619,7 @@ export default function LandingPage({ onOpenAuth }) {
             {/* Right: Why Choose Plannest + Direct Contact Sidebar */}
             <div className="lg:col-span-5 space-y-6">
               {/* Process Highlights Card */}
-              <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+              <div id="workflow" className="scroll-mt-24 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
                 <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-amber-500" />
                   <span>What You Receive</span>
@@ -658,7 +657,7 @@ export default function LandingPage({ onOpenAuth }) {
               </div>
 
               {/* Hardware & Terminal Compatibility Matrix Table */}
-              <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <div id="peripherals" className="scroll-mt-24 bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
                     <Laptop className="w-4 h-4 text-[#00478c]" />

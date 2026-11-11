@@ -54,6 +54,11 @@ export default function SaasAdminCockpit({ onLogout }) {
   const [devices, setDevices] = useState([]);
   const [telemetry, setTelemetry] = useState([]);
   const [licenses, setLicenses] = useState([]);
+  const [versionInfo, setVersionInfo] = useState({
+    version: '1.2.3',
+    publishedAt: '2026-11-10',
+    releaseNotes: '',
+  });
 
   // Filter / Search
   const [storeFilter, setStoreFilter] = useState('all');
@@ -161,9 +166,16 @@ export default function SaasAdminCockpit({ onLogout }) {
       if (licErr) throw licErr;
 
       // 2. Activate store in stores table with portal_password and pin
+      const resolvedApptype =
+        !st.apptype || st.apptype === 'pricing_inquiry'
+          ? planTier === 'lite'
+            ? 'esp'
+            : 'windows'
+          : st.apptype;
       const updatedConfig = {
         ...(st.bill_config || {}),
         registration_status: 'active',
+        source: 'licensed_store',
         machine_id: boundMachine,
         issued_license_key: cleanKey,
         license_issued_at: new Date().toISOString(),
@@ -175,6 +187,7 @@ export default function SaasAdminCockpit({ onLogout }) {
         .from('stores')
         .update({
           is_active: true,
+          apptype: resolvedApptype,
           bill_config: updatedConfig,
         })
         .eq('id', st.id);
@@ -183,17 +196,18 @@ export default function SaasAdminCockpit({ onLogout }) {
 
       // 3. Provision admin user and outlet profile for pospro login
       try {
+        const safeStoreName = (st.name || st.id || 'STORE').trim();
         const adminPayload = {
           id: `usr_${st.id}_admin`,
           store_id: st.id,
-          name: st.bill_config?.owner_name || st.name,
+          name: st.bill_config?.owner_name || safeStoreName,
           pin: cleanPass,
           role: 'Admin (Full Access & User Mgmt)',
           role_title: 'Store Owner / General Manager',
           user_role: 'Admin',
           email: st.bill_config?.owner_email || '',
           phone: st.phone || '',
-          initials: (st.bill_config?.owner_name || st.name || 'SO').substring(0, 2).toUpperCase(),
+          initials: (st.bill_config?.owner_name || safeStoreName || 'SO').substring(0, 2).toUpperCase(),
           status: 'active',
         };
 
@@ -210,7 +224,7 @@ export default function SaasAdminCockpit({ onLogout }) {
             {
               id: `outlet_${st.id}`,
               store_id: st.id,
-              outlet_name: st.name,
+              outlet_name: safeStoreName,
               branch_name: 'Main Counter',
               address_line1: st.address_line1 || '',
               city: st.address_line1 || 'Chennai',
@@ -218,7 +232,7 @@ export default function SaasAdminCockpit({ onLogout }) {
               pincode: '600001',
               phone: st.phone || '',
               email: st.bill_config?.owner_email || '',
-              receipt_header_note: `${st.name.toUpperCase()} - BILLING COUNTER`,
+              receipt_header_note: `${safeStoreName.toUpperCase()} - BILLING COUNTER`,
               receipt_footer_note: 'Thank you for shopping with us! Visit again.',
               return_terms: 'Goods once sold can be exchanged within 24 hours with original bill receipt.',
               bill_prefix: st.bill_prefix || 'INV-',
@@ -244,11 +258,27 @@ export default function SaasAdminCockpit({ onLogout }) {
       // 4. Prepare email text with Store ID and Password
       const ownerName = st.bill_config?.owner_name || 'Store Owner';
       const ownerEmail = st.bill_config?.owner_email || st.phone || '';
+      const isEspStore = resolvedApptype === 'esp';
+      const cloudUrl = isEspStore ? 'https://poslite.plannestapp.com' : 'https://pospro.plannestapp.com';
+      const activationSteps = isEspStore
+        ? `HOW TO ACTIVATE YOUR CROWPANEL ESP32 TERMINAL:
+1. Power on your CrowPanel ESP32 billing terminal and connect it to store Wi-Fi.
+2. Enter your Store ID (${st.id}) and License Key (${cleanKey}) during device pairing.`
+        : `HOW TO ACTIVATE YOUR COUNTER TERMINAL:
+1. Download the Windows installer on your cashier counter PC:
+   https://xcrndfislsbxzzkfrawp.supabase.co/storage/v1/object/public/pos-releases/PlannestPOS-Setup.exe
+
+2. Run PlannestPOS-Setup.exe and enter your License Key:
+   ${cleanKey}
+   The installer will automatically bind your computer's MAC address and create a "Plannest POS Terminal" desktop shortcut!
+
+3. Open the desktop shortcut to start high-speed retail checkout!`;
+
       const emailBody = `Subject: Your Plannest POS Terminal License Key & Store Login Credentials
 
 Dear ${ownerName},
 
-Thank you for registering "${st.name}" with Plannest POS!
+Thank you for registering "${st.name || st.id}" with Plannest POS!
 
 Your outlet has been approved and your official machine license and store login credentials have been generated:
 -------------------------------------------------------------
@@ -259,23 +289,15 @@ Your outlet has been approved and your official machine license and store login 
 • Plan Validity:      ${months} Months (Expires ${expDate.toISOString().split('T')[0]})
 -------------------------------------------------------------
 
-HOW TO ACTIVATE YOUR COUNTER TERMINAL:
-1. Download the Windows installer on your cashier counter PC:
-   https://pos.plannestapp.com/PlannestPOS-Setup.exe
-
-2. Run PlannestPOS-Setup.exe and enter your License Key:
-   ${cleanKey}
-   The installer will automatically bind your computer's MAC address and create a "Plannest POS Terminal" desktop shortcut!
-
-3. Open the desktop shortcut to start high-speed retail checkout!
+${activationSteps}
 
 CLOUD STORE MANAGER LOGIN:
 Manage your product catalog, prices, and daily reports anytime at:
-   URL:               https://pospro.plannestapp.com
+   URL:               ${cloudUrl}
    Store ID / Number: ${st.id}
    Password:          ${cleanPass}
 
-(You can change your password anytime in Store Settings on pospro)
+(You can change your password anytime in Store Settings on ${isEspStore ? 'poslite' : 'pospro'})
 
 Need support? Reply to this email or contact Plannest Support.`;
 
@@ -478,6 +500,12 @@ Need support? Reply to this email or contact Plannest Support.`;
 
   useEffect(() => {
     fetchData();
+    fetch('/version.json?_t=' + Date.now())
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.version) setVersionInfo(data);
+      })
+      .catch(() => {});
   }, []);
 
   // 1. Free Demo & Pricing Requests from landing page
@@ -598,8 +626,8 @@ Need support? Reply to this email or contact Plannest Support.`;
   const filteredStores = activeStores.filter((st) => {
     const matchesType = storeFilter === 'all' || (st.apptype || 'windows') === storeFilter;
     const matchesSearch =
-      st.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      st.id.toLowerCase().includes(searchQuery.toLowerCase());
+      (st.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (st.id || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesType && matchesSearch;
   });
 
@@ -1599,7 +1627,7 @@ Need support? Reply to this email or contact Plannest Support.`;
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono text-xs text-slate-700 space-y-2">
                 <div className="font-bold text-slate-900">Windows Graphical Setup Installer (.exe):</div>
                 <div className="p-2.5 bg-slate-900 text-emerald-400 rounded-lg overflow-x-auto">
-                  https://pos.plannestapp.com/PlannestPOS-Setup.exe
+                  https://xcrndfislsbxzzkfrawp.supabase.co/storage/v1/object/public/pos-releases/PlannestPOS-Setup.exe
                 </div>
                 <p className="text-[11px] text-slate-500 font-sans">
                   The client downloads this setup, enters their license key, and the installer automatically registers their machine's MAC address in Supabase and creates a Desktop shortcut.
@@ -1618,8 +1646,8 @@ Need support? Reply to this email or contact Plannest Support.`;
                   <h3 className="font-bold text-slate-900 text-sm">Windows POS Terminal</h3>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase">Live OTA</span>
                 </div>
-                <div className="text-2xl font-black text-slate-900 font-mono mt-1">v1.2.0 Stable</div>
-                <p className="text-xs text-slate-500 mt-1">Published 2026-11-09 • Auto-broadcasting to all connected terminals</p>
+                <div className="text-2xl font-black text-slate-900 font-mono mt-1">v{versionInfo.version} Stable</div>
+                <p className="text-xs text-slate-500 mt-1">Published {versionInfo.publishedAt || '2026-11-10'} • Auto-broadcasting to all connected terminals</p>
               </div>
               <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
                 <h3 className="font-bold text-slate-900 text-sm">CrowPanel ESP32 Firmware</h3>
@@ -1634,9 +1662,9 @@ Need support? Reply to this email or contact Plannest Support.`;
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-black text-slate-900 text-sm">v1.2.0 Release Notes (Broadcast via /version.json &amp; /plannest-terminal.zip)</h4>
+                <h4 className="font-black text-slate-900 text-sm">v{versionInfo.version} Release Notes (Broadcast via pospro.plannestapp.com/version.json)</h4>
                 <a
-                  href="/version.json"
+                  href="https://pospro.plannestapp.com/version.json"
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs font-bold text-purple-700 hover:underline flex items-center gap-1"
@@ -1645,6 +1673,11 @@ Need support? Reply to this email or contact Plannest Support.`;
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
+              {versionInfo.releaseNotes && (
+                <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  {versionInfo.releaseNotes}
+                </p>
+              )}
               <ul className="text-xs text-slate-700 space-y-1.5 list-disc pl-5">
                 <li><strong>End-of-Day Z-Report Auto-PDF &amp; 80mm Thermal Slip Preview:</strong> Closing a shift now automatically downloads the A4 Z-Report PDF to the cashier's Downloads folder, opens an instant 80mm thermal slip preview for printing, and archives all past shifts in the Saved Z-Reports Archive table.</li>
                 <li><strong>Comprehensive Operator Help &amp; User Guide:</strong> Full step-by-step interactive manual (<code>/help/index.html</code>) accessible from the Help / Guide menu.</li>

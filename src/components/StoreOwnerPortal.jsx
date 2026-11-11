@@ -25,6 +25,7 @@ export default function StoreOwnerPortal({ session, onLogout }) {
   const apptype = session.apptype || store.apptype || 'windows';
   const isWindows = apptype === 'windows';
   const isEsp = apptype === 'esp';
+  const isAndroid = apptype === 'android';
 
   const [license, setLicense] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,34 +75,51 @@ export default function StoreOwnerPortal({ session, onLogout }) {
     fetchLicense();
   }, [storeId]);
 
-  const handleCopyKey = () => {
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // Fallback below
+    }
+    return false;
+  };
+
+  const handleCopyKey = async () => {
     if (!license?.license_key) return;
-    navigator.clipboard.writeText(license.license_key);
+    await copyToClipboard(license.license_key);
     setCopiedKey(true);
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
   const installCommand = `powershell -ExecutionPolicy Bypass -Command "iwr -useb https://pos.plannestapp.com/install.ps1 | iex"`;
 
-  const handleCopyCommand = () => {
-    navigator.clipboard.writeText(installCommand);
+  const handleCopyCommand = async () => {
+    await copyToClipboard(installCommand);
     setCopiedCommand(true);
     setTimeout(() => setCopiedCommand(false), 2000);
   };
 
   const handleResetHardwareLock = async () => {
+    if (!license?.id) {
+      alert('No active license record found to unbind.');
+      return;
+    }
     if (!window.confirm('Are you sure you want to unbind the current terminal? The next machine you launch will claim this license.')) {
       return;
     }
     setLoading(true);
     try {
-      await supabase
+      const { error } = await supabase
         .from('saas_licenses')
         .update({ hardware_uuid: null })
         .eq('id', license.id);
 
+      if (error) throw error;
       setResetSuccess(true);
-      fetchLicense();
+      await fetchLicense();
       setTimeout(() => setResetSuccess(false), 3000);
     } catch (err) {
       alert('Error resetting hardware lock: ' + err.message);
@@ -127,7 +145,7 @@ export default function StoreOwnerPortal({ session, onLogout }) {
                 </span>
               </div>
               <span className="text-[11px] text-slate-500">
-                {isWindows ? 'Windows POS Pro Store' : 'CrowPanel ESP Hardware Store'}
+                {isWindows ? 'Windows POS Pro Store' : isAndroid ? 'Android Tablet POS Store' : 'CrowPanel ESP Hardware Store'}
               </span>
             </div>
           </div>
@@ -160,7 +178,7 @@ export default function StoreOwnerPortal({ session, onLogout }) {
         <div className="bg-gradient-to-r from-[#00478c] to-[#00305e] text-white rounded-2xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <span className="px-3 py-1 rounded-full bg-white/20 text-white text-[11px] font-bold uppercase tracking-wider">
-              {isWindows ? 'Windows POS Pro Active' : 'CrowPanel ESP Active'}
+              {isWindows ? 'Windows POS Pro Active' : isAndroid ? 'Android Tablet POS Active' : 'CrowPanel ESP Active'}
             </span>
             <h2 className="text-2xl sm:text-3xl font-black">
               Welcome, {store.name || 'Store Owner'}!
@@ -222,9 +240,11 @@ export default function StoreOwnerPortal({ session, onLogout }) {
                 <p className="text-xs text-slate-600 max-w-lg">
                   Single-click graphical installer. Double-click to run, choose your install folder, enter your License Key, and it automatically binds your computer's MAC address, creates a Desktop Icon, and launches checkout!
                 </p>
-                <div className="text-[11px] text-slate-500 flex items-center gap-2 pt-0.5">
-                  <span className="font-semibold text-slate-700">Release Notes (v{versionInfo.version}):</span>
-                  <span>End-of-Day Z-Report Auto-PDF, 80mm Slip Preview, Scale Weight Lock, User Help Guide</span>
+                <div className="text-[11px] text-slate-500 flex items-start gap-2 pt-0.5">
+                  <span className="font-semibold text-slate-700 shrink-0">Release Notes (v{versionInfo.version}):</span>
+                  <span className="whitespace-pre-line">
+                    {versionInfo.releaseNotes || 'Offline billing core improvements, GST & loyalty split accuracy, and cloud sync reliability.'}
+                  </span>
                 </div>
               </div>
 

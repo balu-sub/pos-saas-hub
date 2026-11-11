@@ -108,15 +108,72 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
           return;
         }
 
-        loginAsStore(altData);
+        await verifyStorePinAndLogin(altData);
         return;
       }
 
-      loginAsStore(data);
+      await verifyStorePinAndLogin(data);
     } catch (err) {
       setErrorMsg('Connection error: ' + err.message);
       setLoading(false);
     }
+  };
+
+  const verifyStorePinAndLogin = async (storeData) => {
+    const rawPin = pinInput.trim();
+    if (!rawPin) {
+      setErrorMsg('Please enter your Store PIN or Password.');
+      setLoading(false);
+      return;
+    }
+
+    if (storeData.apptype === 'pricing_inquiry' || storeData.bill_config?.source?.includes('landing')) {
+      setErrorMsg('This ID belongs to a pricing inquiry, not an activated store account.');
+      setLoading(false);
+      return;
+    }
+
+    if (storeData.is_active === false || storeData.bill_config?.registration_status === 'pending_license') {
+      setErrorMsg('Your store registration is still pending license approval from Plannest Admin.');
+      setLoading(false);
+      return;
+    }
+
+    const configuredSecrets = [
+      storeData.bill_config?.portal_password,
+      storeData.bill_config?.pin,
+      storeData.pin,
+    ]
+      .filter((val) => val !== undefined && val !== null && String(val).trim() !== '')
+      .map((val) => String(val).trim());
+
+    let userSecrets = [];
+    const { data: usersData, error: usersErr } = await supabase
+      .from('Windows_users')
+      .select('pin, password, status')
+      .eq('store_id', storeData.id);
+
+    if (!usersErr && Array.isArray(usersData)) {
+      userSecrets = usersData
+        .filter((u) => !u.status || u.status === 'active')
+        .flatMap((u) => [u.pin, u.password])
+        .filter((val) => val !== undefined && val !== null && String(val).trim() !== '')
+        .map((val) => String(val).trim());
+    }
+
+    const allSecrets = [...configuredSecrets, ...userSecrets];
+    const hasConfiguredSecrets = allSecrets.length > 0;
+    const matches = hasConfiguredSecrets
+      ? allSecrets.includes(rawPin)
+      : rawPin === '1234';
+
+    if (!matches) {
+      setErrorMsg('Invalid Store PIN or Password. Please check your credentials.');
+      setLoading(false);
+      return;
+    }
+
+    loginAsStore(storeData);
   };
 
   const loginAsStore = (storeData) => {
@@ -177,7 +234,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
 
       // Automatically provision the store's initial outlet profile & admin user in Supabase
       try {
-        await supabase.from('Windows_outlet_profile').insert([
+        const { error: outletErr } = await supabase.from('Windows_outlet_profile').insert([
           {
             id: `outlet_${generatedId}`,
             store_id: generatedId,
@@ -207,8 +264,9 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
             print_return_terms: 1,
           },
         ]);
+        if (outletErr) throw outletErr;
 
-        await supabase.from('Windows_users').insert([
+        const { error: userErr } = await supabase.from('Windows_users').insert([
           {
             id: `usr_${generatedId}_admin`,
             store_id: generatedId,
@@ -223,6 +281,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
             status: 'active',
           },
         ]);
+        if (userErr) throw userErr;
       } catch (provisionErr) {
         console.warn('Initial store provisioning notice:', provisionErr);
       }
@@ -294,8 +353,9 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
 
             {registeredStore.apptype === 'windows' && (
               <a
-                href="/PlannestPOS-Setup.exe"
-                download="PlannestPOS-Setup.exe"
+                href="https://xcrndfislsbxzzkfrawp.supabase.co/storage/v1/object/public/pos-releases/PlannestPOS-Setup.exe"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
@@ -380,7 +440,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                     <Store className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   </div>
                   <span className="text-[11px] text-slate-400 mt-1 block">
-                    Use <strong>STORE-002</strong> (Windows POS) or <strong>STORE-001</strong> (ESP CrowPanel)
+                    Enter your assigned Store ID (check your activation email from Plannest).
                   </span>
                 </div>
 
@@ -392,7 +452,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                     <input
                       type="password"
                       required
-                      placeholder="Default: 1234"
+                      placeholder="Enter Store PIN or Password"
                       value={pinInput}
                       onChange={(e) => setPinInput(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#00478c]"
