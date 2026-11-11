@@ -1,7 +1,7 @@
 {
-  "version": "1.2.3",
+  "version": "1.2.4",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Offline Order Queue & Cloud Sync Reliability: Failed/offline checkouts queue safely into IndexedDB and auto-flush on reconnect; order item sync validates per-item cloud confirmation before marking synced.\n2. Per-Item GST & Loyalty Split Receipt Math: Item tax rates and loyalty redemption splits match printed totals accurately.\n3. Analytics & Store Manager Integrity: Fixed tender breakdowns (tenderType), local IST date alignment, GRN product stock updates, outlet profile persistence, and removed synthetic fallback figures.\n4. Security, Hardware & AI Input Fixes: Hardened scale COM port/printer/update/auth checks, fixed AI Camera stream loop & AI Voice speech endpoint/hotkey F9 collision, and added graceful COM disconnect on shutdown.",
-  "downloadUrl": "https://res.cloudinary.com/ddyuidbkf/raw/upload/v1794307625/pospro_Plannestapp/Help_png/plannest-terminal.zip",
-  "publishedAt": "2026-11-10"
+  "releaseNotes": "1. Multi-Slab GST Percentage Breakdown: Register cart summary and thermal receipts now itemize each GST slab separately (e.g. 5%, 12%, 18%, 28%) instead of a hardcoded 5% label, and local product add/edit persists GST & active status in SQLite.\n2. Cloud Store Manager Catalog Parity: Added Brand, SKU Code, Low Stock Alert, GST Tax Slab, Upload File photo support, and styled Delete Confirmation modal on pospro.plannestapp.com matching the local POS app.",
+  "downloadUrl": "https://res.cloudinary.com/ddyuidbkf/raw/upload/v1794364489/pospro_Plannestapp/Help_png/plannest-terminal.zip",
+  "publishedAt": "2026-11-11"
 }
