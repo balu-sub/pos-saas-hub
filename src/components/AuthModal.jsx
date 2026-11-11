@@ -173,6 +173,46 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
       return;
     }
 
+    // If store already has an active license, skip the intermediate welcome portal and go directly to pospro/poslite
+    const todayStr = new Date().toISOString().split('T')[0];
+    let hasActiveLicense = Boolean(
+      storeData.bill_config?.issued_license_key &&
+        storeData.bill_config?.registration_status === 'active' &&
+        storeData.is_active !== false
+    );
+
+    if (!hasActiveLicense) {
+      const { data: activeLic, error: licErr } = await supabase
+        .from('saas_licenses')
+        .select('id, status, expires_at')
+        .eq('user_id', storeData.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!licErr && activeLic && (!activeLic.expires_at || String(activeLic.expires_at) >= todayStr)) {
+        hasActiveLicense = true;
+      }
+    }
+
+    if (hasActiveLicense) {
+      try {
+        localStorage.removeItem('plannest_session');
+      } catch {}
+      setLoading(false);
+      onClose();
+      const apptype = storeData.apptype || 'windows';
+      if (apptype === 'esp') {
+        window.location.assign('https://poslite.plannestapp.com');
+      } else {
+        window.location.assign(
+          `https://pospro.plannestapp.com/#store=${encodeURIComponent(storeData.id)}&pin=${encodeURIComponent(rawPin)}`
+        );
+      }
+      return;
+    }
+
     loginAsStore(storeData);
   };
 

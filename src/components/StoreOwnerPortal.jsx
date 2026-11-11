@@ -47,6 +47,8 @@ export default function StoreOwnerPortal({ session, onLogout }) {
       .catch(() => {});
   }, []);
 
+  const portalDomain = isEsp ? 'https://poslite.plannestapp.com' : 'https://pospro.plannestapp.com';
+
   // Fetch license for this store from Supabase
   const fetchLicense = async () => {
     setLoading(true);
@@ -58,6 +60,26 @@ export default function StoreOwnerPortal({ session, onLogout }) {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const hasValidLicense =
+        (!error &&
+          data &&
+          data.status === 'active' &&
+          (!data.expires_at || String(data.expires_at) >= todayStr)) ||
+        Boolean(
+          store.bill_config?.issued_license_key &&
+            store.bill_config?.registration_status === 'active' &&
+            store.is_active !== false
+        );
+
+      if (hasValidLicense) {
+        try {
+          localStorage.removeItem('plannest_session');
+        } catch {}
+        window.location.replace(portalDomain);
+        return;
+      }
 
       if (!error && data) {
         setLicense(data);
@@ -127,8 +149,6 @@ export default function StoreOwnerPortal({ session, onLogout }) {
       setLoading(false);
     }
   };
-
-  const portalDomain = isEsp ? 'https://poslite.plannestapp.com' : 'https://pospro.plannestapp.com';
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900">
