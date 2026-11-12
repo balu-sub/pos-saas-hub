@@ -133,12 +133,6 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
       return;
     }
 
-    if (storeData.is_active === false || storeData.bill_config?.registration_status === 'pending_license') {
-      setErrorMsg('Your store registration is still pending license approval from Plannest Admin.');
-      setLoading(false);
-      return;
-    }
-
     const configuredSecrets = [
       storeData.bill_config?.portal_password,
       storeData.bill_config?.pin,
@@ -196,7 +190,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
       }
     }
 
-    if (hasActiveLicense) {
+    if (hasActiveLicense || (storeData.apptype || 'windows') !== 'esp') {
       try {
         localStorage.removeItem('plannest_session');
       } catch {}
@@ -372,6 +366,22 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
               </p>
             </div>
 
+            <div className="p-4 bg-blue-50/70 rounded-2xl border border-blue-200 text-left text-xs space-y-1.5 text-slate-700">
+              <div className="font-bold text-[#00478c] uppercase tracking-wider text-[10px]">
+                Temporary Portal Login Credentials
+              </div>
+              <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-blue-100">
+                <div>
+                  <span className="text-[11px] text-slate-500">Store ID: </span>
+                  <strong className="font-mono text-slate-900">{registeredStore.id}</strong>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500">Default Password / PIN: </span>
+                  <strong className="font-mono text-[#00478c]">1234</strong>
+                </div>
+              </div>
+            </div>
+
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-left text-xs space-y-2 text-slate-700">
               <div className="font-bold text-slate-900 flex items-center gap-1.5">
                 <Send className="w-4 h-4 text-[#00478c]" />
@@ -379,29 +389,34 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
               </div>
               <ul className="space-y-1.5 text-[11px] text-slate-600 list-disc list-inside">
                 <li>
-                  Our licensing team has received your outlet details.
+                  Sign in with your Store ID (<strong>{registeredStore.id}</strong>) and default PIN{' '}
+                  <strong>1234</strong> to access <strong>Terminal App &amp; Downloads</strong>.
                 </li>
                 <li>
-                  Your machine-locked License Key will be generated and delivered to{' '}
+                  Your machine-locked License Key is being generated and will be sent to{' '}
                   <strong className="text-slate-900">{registeredStore.email}</strong>.
                 </li>
                 <li>
-                  In the meantime, you can download the 1-click installer on your billing counter PC below.
+                  Once your license is generated, <strong>Admin Hub</strong>, <strong>Replenishment</strong>, and{' '}
+                  <strong>Analytics</strong> will unlock automatically.
                 </li>
               </ul>
             </div>
 
-            {registeredStore.apptype === 'windows' && (
-              <a
-                href="https://xcrndfislsbxzzkfrawp.supabase.co/storage/v1/object/public/pos-releases/PlannestPOS-Setup.exe"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download Windows Installer (PlannestPOS-Setup.exe)</span>
-              </a>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setStoreIdInput(registeredStore.id);
+                setPinInput('1234');
+                setRegisteredStore(null);
+                setErrorMsg('');
+                setMode('signin');
+              }}
+              className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Sign In with {registeredStore.id} &amp; Default PIN (1234)</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
 
             <button
               onClick={() => {
