@@ -2,6 +2,6 @@
   "version": "1.2.5",
   "minRequiredVersion": "1.0.0",
   "releaseNotes": "1. Accurate Peripheral Status Counter: Footer and Peripherals Manager now count only the 3 active hardware devices (Scanner, Scale, Printer -> 3/3 Active) while AI Camera, AI Voice, and Cash Drawer remain paused for a later release.",
-  "downloadUrl": "https://res.cloudinary.com/ddyuidbkf/raw/upload/v1794364489/pospro_Plannestapp/Help_png/plannest-terminal.zip",
+  "downloadUrl": "https://res.cloudinary.com/ddyuidbkf/raw/upload/v1794405760/pospro_Plannestapp/Help_png/plannest-terminal.zip",
   "publishedAt": "2026-11-11"
 }
