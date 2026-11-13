@@ -990,7 +990,9 @@ Need support? Reply to this email or contact Plannest Support.`;
               {filteredStores.map((st) => {
                 const apptype = st.apptype || 'windows';
                 const isEsp = apptype === 'esp';
-                const portalUrl = isEsp ? 'https://poslite.plannestapp.com' : 'https://pospro.plannestapp.com';
+                const targetBaseUrl = isEsp ? 'https://poslite.plannestapp.com' : 'https://pospro.plannestapp.com';
+                const storePass = st.bill_config?.portal_password || st.bill_config?.pin || '1234';
+                const portalUrl = `${targetBaseUrl}#store=${encodeURIComponent(st.id)}&pin=${encodeURIComponent(storePass)}`;
 
                 return (
                   <div
