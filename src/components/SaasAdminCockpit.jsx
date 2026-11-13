@@ -266,7 +266,7 @@ export default function SaasAdminCockpit({ onLogout }) {
 2. Enter your Store ID (${st.id}) and License Key (${cleanKey}) during device pairing.`
         : `HOW TO ACTIVATE YOUR COUNTER TERMINAL:
 1. Download the Windows installer on your cashier counter PC:
-   https://pospro.plannestapp.com/PlannestPOS-Setup.exe
+   https://pos-downloads.plannestapp.com/PlannestPOS-Setup.exe
 
 2. Run PlannestPOS-Setup.exe and enter your License Key:
    ${cleanKey}
@@ -1627,7 +1627,7 @@ Need support? Reply to this email or contact Plannest Support.`;
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono text-xs text-slate-700 space-y-2">
                 <div className="font-bold text-slate-900">Windows Graphical Setup Installer (.exe):</div>
                 <div className="p-2.5 bg-slate-900 text-emerald-400 rounded-lg overflow-x-auto">
-                  https://pospro.plannestapp.com/PlannestPOS-Setup.exe
+                  https://pos-downloads.plannestapp.com/PlannestPOS-Setup.exe
                 </div>
                 <p className="text-[11px] text-slate-500 font-sans">
                   The client downloads this setup, enters their license key, and the installer automatically registers their machine's MAC address in Supabase and creates a Desktop shortcut.

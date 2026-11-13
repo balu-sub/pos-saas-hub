@@ -1,7 +1,7 @@
 {
-  "version": "1.2.5",
+  "version": "1.2.6",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Accurate Peripheral Status Counter: Footer and Peripherals Manager now count only the 3 active hardware devices (Scanner, Scale, Printer -> 3/3 Active) while AI Camera, AI Voice, and Cash Drawer remain paused for a later release.",
-  "downloadUrl": "https://res.cloudinary.com/ddyuidbkf/raw/upload/v1794405760/pospro_Plannestapp/Help_png/plannest-terminal.zip",
-  "publishedAt": "2026-11-11"
+  "releaseNotes": "1. Hardened License & Store Identity Protection: Direct R2 Cloud Storage deployment, cross-checked Store ID, Name and License lock during terminal installation, and explicit Outlet Profile ID display.",
+  "downloadUrl": "https://pos-downloads.plannestapp.com/plannest-terminal.zip",
+  "publishedAt": "2026-11-13"
 }
