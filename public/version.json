@@ -1,7 +1,7 @@
 {
-  "version": "1.2.6",
+  "version": "2.2.7",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Hardened License & Store Identity Protection: Direct R2 Cloud Storage deployment, cross-checked Store ID, Name and License lock during terminal installation, and explicit Outlet Profile ID display.",
+  "releaseNotes": "1. Perishables Wastage, Spoilage & Shrinkage Tracking: Full audit ledger, cost loss calculation, and decimal kg produce disposal.\n2. Cash Auto Rounding-Off (Paise to Rupee): Automatic invoice rounding to nearest ₹1 under Section 170 CGST Act to eliminate fractional paise friction.",
   "downloadUrl": "https://pos-downloads.plannestapp.com/plannest-terminal.zip",
-  "publishedAt": "2026-11-13"
+  "publishedAt": "2026-11-14"
 }
