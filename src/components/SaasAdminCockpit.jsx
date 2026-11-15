@@ -100,6 +100,8 @@ export default function SaasAdminCockpit({ onLogout }) {
   const [emergencyRestoreStore, setEmergencyRestoreStore] = useState(null);
   const [cloudStats, setCloudStats] = useState({ products: 0, customers: 0, orders: 0, loading: false });
   const [verifiedStorePhone, setVerifiedStorePhone] = useState(false);
+  const [phoneVerificationError, setPhoneVerificationError] = useState(false);
+  const [showConfirmRestoreModal, setShowConfirmRestoreModal] = useState(false);
   const [superAdminMasterKey, setSuperAdminMasterKey] = useState('PLANNEST-SUPERADMIN-RESTORE-2026');
   const [isExecutingRestore, setIsExecutingRestore] = useState(false);
   const [restoreExecutionResult, setRestoreExecutionResult] = useState(null);
@@ -113,6 +115,8 @@ export default function SaasAdminCockpit({ onLogout }) {
   const openEmergencyRestoreModal = async (st) => {
     setEmergencyRestoreStore(st);
     setVerifiedStorePhone(false);
+    setPhoneVerificationError(false);
+    setShowConfirmRestoreModal(false);
     setRestoreExecutionResult(null);
     setSuperAdminMasterKey('PLANNEST-SUPERADMIN-RESTORE-2026');
     setCloudStats({ products: 0, customers: 0, orders: 0, loading: true });
@@ -134,21 +138,17 @@ export default function SaasAdminCockpit({ onLogout }) {
     }
   };
 
-  const handleExecuteEmergencyRestore = async () => {
+  const handleInitiateRestore = () => {
     if (!verifiedStorePhone) {
-      alert('Security Protocol: You must verify the store owner identity via phone call before authorizing restoration.');
+      setPhoneVerificationError(true);
       return;
     }
-    const confirmRestore = window.confirm(
-      `⚠️ CONFIRM CLOUD RESTORATION DIRECTIVE\n\n` +
-      `Target Store: ${emergencyRestoreStore.name} (${emergencyRestoreStore.id})\n` +
-      `Verified Store Phone: ${emergencyRestoreStore.phone || 'N/A'}\n\n` +
-      `This will record an authorized recovery directive in Supabase.\n` +
-      `The store owner simply clicks "Reload DB" in their POS footer to restore all catalog, customer, and Khata data.\n\n` +
-      `Proceed?`
-    );
-    if (!confirmRestore) return;
+    setPhoneVerificationError(false);
+    setShowConfirmRestoreModal(true);
+  };
 
+  const handleConfirmExecuteEmergencyRestore = async () => {
+    setShowConfirmRestoreModal(false);
     setIsExecutingRestore(true);
     setRestoreExecutionResult(null);
     try {
@@ -2304,13 +2304,23 @@ Need support? Reply to this email or contact Plannest Support.`;
                 <input
                   type="checkbox"
                   checked={verifiedStorePhone}
-                  onChange={(e) => setVerifiedStorePhone(e.target.checked)}
+                  onChange={(e) => {
+                    setVerifiedStorePhone(e.target.checked);
+                    if (e.target.checked) setPhoneVerificationError(false);
+                  }}
                   className="mt-0.5 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-amber-300"
                 />
                 <span className="text-xs font-bold text-amber-950">
                   I confirm that I have spoken with the store owner via phone at {emergencyRestoreStore.phone || 'their registered number'} and verified their request for database recovery.
                 </span>
               </label>
+
+              {phoneVerificationError && (
+                <div className="p-2.5 bg-rose-100 border border-rose-300 text-rose-900 rounded-xl text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 text-rose-700 shrink-0" />
+                  <span>Please check the verification box above to confirm phone identity before proceeding.</span>
+                </div>
+              )}
             </div>
 
             {/* Step 2: Cloud Mirror & Two-Way Restoration State */}
@@ -2441,14 +2451,75 @@ Need support? Reply to this email or contact Plannest Support.`;
                 </button>
                 <button
                   type="button"
-                  onClick={handleExecuteEmergencyRestore}
-                  disabled={isExecutingRestore || !verifiedStorePhone}
+                  onClick={handleInitiateRestore}
+                  disabled={isExecutingRestore}
                   className="px-5 py-2 bg-purple-700 hover:bg-purple-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer shadow-sm transition"
                 >
                   <RotateCcw className={`w-3.5 h-3.5 ${isExecutingRestore ? 'animate-spin' : ''}`} />
                   <span>{isExecutingRestore ? 'Authorizing Cloud Restore...' : 'Authorize Cloud Recovery Directive'}</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CONFIRMATION MODAL: Cloud Restoration Directive (Replaces Native Browser window.confirm) */}
+      {showConfirmRestoreModal && emergencyRestoreStore && (
+        <div className="fixed inset-0 z-60 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95">
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 text-amber-700">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-black text-slate-900 text-base leading-snug">
+                  Confirm Cloud Restoration Directive
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  SuperAdmin Disaster Recovery Protocol
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2 text-slate-700">
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/80">
+                <span className="text-slate-400 font-semibold">Target Store:</span>
+                <span className="font-black text-slate-900 text-right">
+                  {emergencyRestoreStore.name} ({emergencyRestoreStore.id})
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/80">
+                <span className="text-slate-400 font-semibold">Verified Phone:</span>
+                <span className="font-mono font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md">
+                  {emergencyRestoreStore.phone || 'N/A'}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-600 leading-relaxed pt-1">
+                This will record an authorized recovery directive in Supabase. The store owner simply clicks <strong>"Reload DB"</strong> in their POS footer to restore all catalog, customer, and Khata data.
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              Are you sure you want to proceed with authorizing cloud recovery for this store?
+            </p>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowConfirmRestoreModal(false)}
+                className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmExecuteEmergencyRestore}
+                className="px-5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer transition"
+              >
+                <Check className="w-4 h-4" />
+                <span>Confirm &amp; Authorize</span>
+              </button>
             </div>
           </div>
         </div>
