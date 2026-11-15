@@ -96,6 +96,147 @@ export default function SaasAdminCockpit({ onLogout }) {
   const [demoStatusFilter, setDemoStatusFilter] = useState('all');
   const [editingNotes, setEditingNotes] = useState({});
 
+  // SuperAdmin Disaster Recovery & Database Restoration State
+  const [emergencyRestoreStore, setEmergencyRestoreStore] = useState(null);
+  const [terminalEndpoint, setTerminalEndpoint] = useState('http://localhost:3000');
+  const [storeBackups, setStoreBackups] = useState([]);
+  const [isLoadingStoreBackups, setIsLoadingStoreBackups] = useState(false);
+  const [backupFetchError, setBackupFetchError] = useState(null);
+  const [selectedBackupFile, setSelectedBackupFile] = useState('');
+  const [customBackupFile, setCustomBackupFile] = useState('');
+  const [verifiedStorePhone, setVerifiedStorePhone] = useState(false);
+  const [superAdminMasterKey, setSuperAdminMasterKey] = useState('PLANNEST-SUPERADMIN-RESTORE-2026');
+  const [isExecutingRestore, setIsExecutingRestore] = useState(false);
+  const [restoreExecutionResult, setRestoreExecutionResult] = useState(null);
+  const [copiedToken, setCopiedToken] = useState(false);
+
+  const getDynamicTodayToken = () => {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    return `SUPERADMIN-${today}`;
+  };
+
+  const openEmergencyRestoreModal = (st) => {
+    setEmergencyRestoreStore(st);
+    setVerifiedStorePhone(false);
+    setRestoreExecutionResult(null);
+    setBackupFetchError(null);
+    setStoreBackups([]);
+    setSelectedBackupFile('');
+    setCustomBackupFile('');
+    setSuperAdminMasterKey('PLANNEST-SUPERADMIN-RESTORE-2026');
+    const endpoint = st.bill_config?.terminal_ip || 'http://localhost:3000';
+    setTerminalEndpoint(endpoint);
+    fetchTerminalBackups(endpoint);
+  };
+
+  const fetchTerminalBackups = async (endpoint) => {
+    setIsLoadingStoreBackups(true);
+    setBackupFetchError(null);
+    try {
+      const cleanEndpoint = (endpoint || 'http://localhost:3000').replace(/\/+$/, '');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`${cleanEndpoint}/api/database/backups`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to reach terminal`);
+      const data = await res.json();
+      const list = data.backups || [];
+      setStoreBackups(list);
+      if (list.length > 0) {
+        setSelectedBackupFile(list[0].filename);
+      }
+    } catch (err) {
+      setBackupFetchError(
+        `Direct terminal link unreachable at ${endpoint} (${err.message}). If the store PC is on a different network, ensure SuperAdmin connects via AnyDesk/LAN, or provide the Dynamic Token to authorize locally.`
+      );
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      setCustomBackupFile(`plannest_pos_${yesterday}.db`);
+    } finally {
+      setIsLoadingStoreBackups(false);
+    }
+  };
+
+  const handleExecuteEmergencyRestore = async () => {
+    if (!verifiedStorePhone) {
+      alert('Security Protocol: You must verify the store owner identity via phone call before executing restoration.');
+      return;
+    }
+    const targetFile = selectedBackupFile || customBackupFile.trim();
+    if (!targetFile) {
+      alert('Please select or specify a backup filename to restore.');
+      return;
+    }
+    const cleanEndpoint = (terminalEndpoint || 'http://localhost:3000').replace(/\/+$/, '');
+    const confirmRestore = window.confirm(
+      `⚠️ CRITICAL CONFIRMATION — SUPERADMIN DISASTER RECOVERY\n\n` +
+      `Target Store: ${emergencyRestoreStore.name} (${emergencyRestoreStore.id})\n` +
+      `Terminal URL: ${cleanEndpoint}\n` +
+      `Snapshot to Restore: ${targetFile}\n` +
+      `Verified Store Phone: ${emergencyRestoreStore.phone || 'N/A'}\n\n` +
+      `This will overwrite active database on the store terminal with snapshot "${targetFile}".\n` +
+      `A safety pre-restore backup will be created on the terminal automatically before replacement.\n\n` +
+      `Proceed with database restoration?`
+    );
+    if (!confirmRestore) return;
+
+    setIsExecutingRestore(true);
+    setRestoreExecutionResult(null);
+    try {
+      const res = await fetch(`${cleanEndpoint}/api/database/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          backupFilename: targetFile,
+          superAdminKey: superAdminMasterKey.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Restoration failed');
+      }
+
+      // Log disaster recovery event to Supabase for permanent audit
+      const existingLogs = emergencyRestoreStore.bill_config?.disaster_recovery_logs || [];
+      const updatedLogs = [
+        {
+          timestamp: new Date().toISOString(),
+          backupFilename: targetFile,
+          restoredBy: 'SuperAdmin',
+          verifiedPhone: emergencyRestoreStore.phone,
+          preRestoreBackup: data.preRestoreBackup,
+        },
+        ...existingLogs.slice(0, 9),
+      ];
+
+      await supabase
+        .from('stores')
+        .update({
+          bill_config: {
+            ...(emergencyRestoreStore.bill_config || {}),
+            disaster_recovery_logs: updatedLogs,
+            last_restored_at: new Date().toISOString(),
+          },
+        })
+        .eq('id', emergencyRestoreStore.id);
+
+      setRestoreExecutionResult({
+        success: true,
+        message: data.message || `Database successfully restored to ${targetFile}!`,
+        preRestoreBackup: data.preRestoreBackup,
+      });
+      await fetchData();
+    } catch (err) {
+      setRestoreExecutionResult({
+        success: false,
+        message: err.message || 'Restoration failed. Ensure terminal server is running and SuperAdmin key is valid.',
+      });
+    } finally {
+      setIsExecutingRestore(false);
+    }
+  };
+
   const handleUpdateLead = async (inqId, newStatus, newNotes) => {
     try {
       const targetInq = stores.find((s) => s.id === inqId);
@@ -1051,6 +1192,16 @@ Need support? Reply to this email or contact Plannest Support.`;
                         <span>Open Store Manager ({isEsp ? 'poslite' : 'pospro'})</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
+
+                      <button
+                        type="button"
+                        onClick={() => openEmergencyRestoreModal(st)}
+                        className="w-full py-2 px-3 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                        title="Authorized SuperAdmin Disaster Recovery & Database Restoration"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-purple-600" />
+                        <span>Emergency Restore</span>
+                      </button>
 
                       <div className="flex items-center gap-2 pt-0.5">
                         <button
@@ -2145,6 +2296,238 @@ Need support? Reply to this email or contact Plannest Support.`;
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: SuperAdmin Disaster Recovery & Database Restoration */}
+      {emergencyRestoreStore && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 uppercase tracking-wider flex items-center gap-1">
+                    <RotateCcw className="w-3 h-3 text-purple-700" />
+                    SuperAdmin Disaster Recovery
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    {emergencyRestoreStore.id}
+                  </span>
+                </div>
+                <h3 className="font-black text-slate-900 text-base mt-1">
+                  {emergencyRestoreStore.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmergencyRestoreStore(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Step 1: Voice & Identity Verification Protocol */}
+            <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                  <Phone className="w-4 h-4 text-amber-700" />
+                  Step 1: Phone Identity Verification
+                </span>
+                <span className="text-xs font-mono font-bold text-amber-900 bg-amber-200/60 px-2 py-0.5 rounded-md">
+                  {emergencyRestoreStore.phone || 'No phone registered'}
+                </span>
+              </div>
+              <p className="text-xs text-amber-900 leading-relaxed">
+                Database restoration replaces live customer balances, Khata ledgers, and inventory. Plannest security policy requires SuperAdmin to call the registered store owner directly and confirm their identity before proceeding.
+              </p>
+              <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={verifiedStorePhone}
+                  onChange={(e) => setVerifiedStorePhone(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-amber-300"
+                />
+                <span className="text-xs font-bold text-amber-950">
+                  I confirm that I have spoken with the store owner via phone at {emergencyRestoreStore.phone || 'their registered number'} and verified their request for database recovery.
+                </span>
+              </label>
+            </div>
+
+            {/* Step 2: Terminal Link & Live Daily Snapshots */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Database className="w-4 h-4 text-purple-700" />
+                  Step 2: Terminal Connection &amp; Available Snapshots
+                </span>
+                <button
+                  type="button"
+                  onClick={() => fetchTerminalBackups(terminalEndpoint)}
+                  disabled={isLoadingStoreBackups}
+                  className="text-[11px] font-bold text-purple-700 hover:text-purple-800 flex items-center gap-1 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isLoadingStoreBackups ? 'animate-spin' : ''}`} />
+                  <span>Refresh Snapshots</span>
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  Store Terminal URL / Local Network IP
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={terminalEndpoint}
+                    onChange={(e) => setTerminalEndpoint(e.target.value)}
+                    placeholder="http://localhost:3000 or http://192.168.1.50:3000"
+                    className="flex-1 px-3 py-1.5 text-xs font-mono border border-slate-200 rounded-lg bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fetchTerminalBackups(terminalEndpoint)}
+                    disabled={isLoadingStoreBackups}
+                    className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-lg cursor-pointer"
+                  >
+                    Connect
+                  </button>
+                </div>
+              </div>
+
+              {/* Snapshots Found */}
+              {storeBackups.length > 0 ? (
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Select Daily Backup Snapshot from Store Disk ({storeBackups.length} available)
+                  </label>
+                  <select
+                    value={selectedBackupFile}
+                    onChange={(e) => setSelectedBackupFile(e.target.value)}
+                    className="w-full px-3 py-2 border border-purple-200 rounded-xl text-xs font-mono font-bold bg-white text-slate-900"
+                  >
+                    {storeBackups.map((b) => (
+                      <option key={b.filename} value={b.filename}>
+                        {b.filename} — {b.sizeFormatted} ({new Date(b.createdAt).toLocaleDateString()}) {b.isPreRestore ? '[Safety Snapshot]' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {backupFetchError && (
+                    <div className="p-2.5 bg-slate-100 rounded-lg text-[11px] text-slate-600">
+                      {backupFetchError}
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Target Snapshot Filename to Restore
+                    </label>
+                    <input
+                      type="text"
+                      value={customBackupFile}
+                      onChange={(e) => setCustomBackupFile(e.target.value)}
+                      placeholder="e.g. plannest_pos_2026-11-14.db"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono font-bold bg-white text-slate-900"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Emergency Verification Token */}
+              <div className="p-2.5 bg-indigo-50/60 rounded-xl border border-indigo-100 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-900 block">
+                    Dynamic Daily Emergency PIN
+                  </span>
+                  <span className="text-xs font-mono font-black text-indigo-700">
+                    {getDynamicTodayToken()}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(getDynamicTodayToken());
+                    setCopiedToken(true);
+                    setTimeout(() => setCopiedToken(false), 2500);
+                  }}
+                  className="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-800 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-indigo-50 cursor-pointer"
+                >
+                  <Copy className="w-3 h-3" />
+                  <span>{copiedToken ? 'Copied!' : 'Copy PIN'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Step 3: SuperAdmin Master Authorization Key */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Step 3: SuperAdmin Master Authorization Secret
+              </label>
+              <input
+                type="password"
+                value={superAdminMasterKey}
+                onChange={(e) => setSuperAdminMasterKey(e.target.value)}
+                placeholder="Enter SuperAdmin Master Key..."
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono font-bold bg-white text-slate-900 focus:ring-2 focus:ring-purple-600 focus:outline-hidden"
+              />
+              <span className="text-[10px] text-slate-500 mt-1 block">
+                Validates persistent master key or dynamic phone authorization PIN.
+              </span>
+            </div>
+
+            {/* Results Banner */}
+            {restoreExecutionResult && (
+              <div
+                className={`p-3.5 rounded-xl border text-xs font-bold flex items-start gap-2.5 ${
+                  restoreExecutionResult.success
+                    ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                    : 'bg-rose-50 text-rose-900 border-rose-300'
+                }`}
+              >
+                {restoreExecutionResult.success ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
+                )}
+                <div>
+                  <p>{restoreExecutionResult.message}</p>
+                  {restoreExecutionResult.preRestoreBackup && (
+                    <p className="text-[11px] text-emerald-700 font-mono mt-0.5">
+                      Safety pre-restore snapshot: {restoreExecutionResult.preRestoreBackup}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                Logged to Master Audit Ledger
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEmergencyRestoreStore(null)}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteEmergencyRestore}
+                  disabled={isExecutingRestore || !verifiedStorePhone}
+                  className="px-5 py-2 bg-purple-700 hover:bg-purple-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer shadow-sm transition"
+                >
+                  <RotateCcw className={`w-3.5 h-3.5 ${isExecutingRestore ? 'animate-spin' : ''}`} />
+                  <span>{isExecutingRestore ? 'Authorizing & Restoring...' : 'Verify & Execute Restore'}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
