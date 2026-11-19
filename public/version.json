@@ -1,8 +1,8 @@
 {
-    "version":  "2.4.2",
+    "version":  "2.4.3",
     "minRequiredVersion":  "1.0.0",
     "releaseNotes":  "1. Inventory Accounting \u0026 FEFO: Unified inventory logic across Billing, Catalogue Edit, GRN Replenishment, and Spoilage/Wastage.\n2. Multi-Store Isolation: Strict store_id segregation on product batches and inventory ledger.\n3. Automatic Audit Ledger: Every stock change records immutable inventory ledger entries (GOODS_RECEIPT, SALE, DAMAGE_WASTAGE, ADJUSTMENT).\n4. Accurate Stock Synchronization: Eliminated ghost stock fallbacks, ensuring 100% data integrity between Local POS and Cloud.",
-    "downloadUrl":  "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.4.2",
+    "downloadUrl":  "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.4.3",
     "publishedAt":  "2026-11-19",
-    "sha256":  "479cfc6b039ec32ab4d59da27d7ea356ceb5ac66a2c0aaf9e5b9c8f9d14fb646"
+    "sha256":  "6c66124a642089089f2980530b539c3b6707ffc1b55837c90e4c8e62f5e7c352"
 }
