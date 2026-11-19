@@ -3,6 +3,7 @@ import LandingPage from './components/LandingPage';
 import AuthModal from './components/AuthModal';
 import StoreOwnerPortal from './components/StoreOwnerPortal';
 import SaasAdminCockpit from './components/SaasAdminCockpit';
+import SuperAdminLogin from './components/SuperAdminLogin';
 
 export default function App() {
   const [session, setSession] = useState(() => {
@@ -14,18 +15,41 @@ export default function App() {
     }
   });
 
+  const [currentPath, setCurrentPath] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.pathname.toLowerCase();
+    }
+    return '/';
+  });
+
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('signup'); // 'signup' | 'signin'
 
-  // Support direct admin access via URL parameter (e.g., pos.plannestapp.com?admin=1)
+  // Route & search params tracking
   useEffect(() => {
+    const handleLocationChange = () => {
+      if (typeof window !== 'undefined') {
+        setCurrentPath(window.location.pathname.toLowerCase());
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('admin') === '1' || params.get('mode') === 'signin') {
+      if (params.get('admin') === '1') {
+        // Direct admin query parameter
+        if (window.location.pathname !== '/admin') {
+          window.history.replaceState({}, '', '/admin');
+          setCurrentPath('/admin');
+        }
+      } else if (params.get('mode') === 'signin') {
         setAuthMode('signin');
         setIsAuthOpen(true);
       }
     } catch {}
+
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
   const handleOpenAuth = (mode = 'signup') => {
@@ -35,6 +59,7 @@ export default function App() {
 
   const handleLoginSuccess = (newSession) => {
     setSession(newSession);
+    setIsAuthOpen(false);
   };
 
   const handleLogout = () => {
@@ -42,18 +67,36 @@ export default function App() {
     localStorage.removeItem('plannest_session');
   };
 
-  // If user is logged in
-  if (session) {
-    if (session.role === 'super_admin') {
-      return <SaasAdminCockpit onLogout={handleLogout} />;
+  const handleNavigateHome = () => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', '/');
+      setCurrentPath('/');
     }
+  };
 
-    if (session.role === 'store_owner') {
-      return <StoreOwnerPortal session={session} onLogout={handleLogout} />;
-    }
+  const isAdminRoute = currentPath === '/admin' || currentPath === '/admin/';
+
+  // 1. If user is logged in as Super Admin
+  if (session && session.role === 'super_admin') {
+    return <SaasAdminCockpit onLogout={handleLogout} />;
   }
 
-  // Otherwise, render Public Marketing Landing Page
+  // 2. If user is logged in as Store Owner
+  if (session && session.role === 'store_owner') {
+    return <StoreOwnerPortal session={session} onLogout={handleLogout} />;
+  }
+
+  // 3. If accessing https://pos.plannestapp.com/admin without session -> Render Superadmin Login Page
+  if (isAdminRoute) {
+    return (
+      <SuperAdminLogin
+        onLoginSuccess={handleLoginSuccess}
+        onNavigateHome={handleNavigateHome}
+      />
+    );
+  }
+
+  // 4. Otherwise, render Public Marketing Landing Page
   return (
     <>
       <LandingPage onOpenAuth={handleOpenAuth} />
