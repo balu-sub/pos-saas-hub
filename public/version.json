@@ -1,7 +1,8 @@
 {
-  "version": "2.2.7",
-  "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Perishables Wastage, Spoilage & Shrinkage Tracking: Full audit ledger, cost loss calculation, and decimal kg produce disposal.\n2. Cash Auto Rounding-Off (Paise to Rupee): Automatic invoice rounding to nearest ₹1 under Section 170 CGST Act to eliminate fractional paise friction.",
-  "downloadUrl": "https://pos-downloads.plannestapp.com/plannest-terminal.zip",
-  "publishedAt": "2026-11-14"
+    "version":  "2.3.8",
+    "minRequiredVersion":  "1.0.0",
+    "releaseNotes":  "1. Cash \u0026 UPI Privacy: PlanX Copilot completely hidden on Cash \u0026 UPI screen.\n2. Role-Based Tender View: Cashier/Staff view strictly limited to their own shift tender \u0026 drops; Supervisors/Admin see consolidated store totals.\n3. Immutable Audit Trail: Every transaction, stock adjustment, wastage, purchase intake, and user change logs verifiable timestamp and operator name.\n4. PlanX Audit Queries: Supervisors \u0026 Admins can query \u0027Who made transaction...\u0027, \u0027Who recorded wastage...\u0027, or \u0027Transactions by [name]\u0027.\n5. Shift Handover \u0026 Auto Z-Report: Logging in as a new user automatically logs out previous operator and records their official shift Z-Report.",
+    "downloadUrl":  "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.3.8",
+    "publishedAt":  "2026-11-18",
+    "sha256":  "35bf7590f46df87bb6afbcf12ad06b17299d4fb790893c48eef2ef7ccabf44f7"
 }

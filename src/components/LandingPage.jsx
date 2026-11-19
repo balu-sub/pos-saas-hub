@@ -135,14 +135,8 @@ export default function LandingPage({ onOpenAuth }) {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => onOpenAuth('signin')}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition"
-            >
-              Sign In
-            </button>
-            <button
               onClick={() => onOpenAuth('signup')}
-              className="px-4 py-2 text-xs font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-xs transition flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-bold bg-[#00478c] hover:bg-[#003870] text-white rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
             >
               <span>Sign Up</span>
               <ArrowRight className="w-3.5 h-3.5" />

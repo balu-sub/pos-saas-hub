@@ -12,6 +12,7 @@ import {
   Check,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Mail,
   User,
   Phone,
@@ -22,12 +23,32 @@ import {
   Plus
 } from 'lucide-react';
 
+// Phone and store name normalization helpers
+function normalizePhone(phone) {
+  if (!phone) return '';
+  const digits = String(phone).replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1);
+  return digits;
+}
+
+function normalizeStoreName(name) {
+  if (!name) return '';
+  return String(name).trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess }) {
-  const [mode, setMode] = useState(initialMode || 'signin'); // 'signin' | 'signup'
+  const [mode, setMode] = useState(initialMode || 'signup'); // 'signin' | 'signup'
   const [storeIdInput, setStoreIdInput] = useState('');
   const [pinInput, setPinInput] = useState('1234');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Duplicate verification state
+  const [existingStores, setExistingStores] = useState([]);
+  const [nameWarning, setNameWarning] = useState(null);
+  const [phoneWarning, setPhoneWarning] = useState(null);
+  const [comboError, setComboError] = useState(null);
 
   // Sign up fields
   const [newStore, setNewStore] = useState({
@@ -45,14 +66,117 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
   // Success state after submitting registration
   const [registeredStore, setRegisteredStore] = useState(null);
 
-  // Sync mode whenever modal opens or initialMode changes
+  // Fetch all existing registered stores for uniqueness validation
+  const fetchExistingStores = async () => {
+    try {
+      const { data: storesList } = await supabase
+        .from('stores')
+        .select('id, name, phone');
+      const { data: profilesList } = await supabase
+        .from('Windows_outlet_profile')
+        .select('store_id, outlet_name, phone');
+
+      const combined = [];
+      if (Array.isArray(storesList)) {
+        storesList.forEach((s) => {
+          if (s.name || s.phone) {
+            combined.push({ id: s.id, name: s.name || '', phone: s.phone || '' });
+          }
+        });
+      }
+      if (Array.isArray(profilesList)) {
+        profilesList.forEach((p) => {
+          if ((p.outlet_name || p.phone) && !combined.some((c) => c.id === p.store_id)) {
+            combined.push({ id: p.store_id, name: p.outlet_name || '', phone: p.phone || '' });
+          }
+        });
+      }
+      setExistingStores(combined);
+      return combined;
+    } catch (err) {
+      console.warn('Could not prefetch stores:', err);
+      return [];
+    }
+  };
+
+  // Evaluate duplicate rules
+  const evaluateDuplicates = (nameInput, phoneInput, storeList = existingStores) => {
+    const cleanName = normalizeStoreName(nameInput);
+    const cleanPhone = normalizePhone(phoneInput);
+
+    if (!cleanName && !cleanPhone) {
+      setComboError(null);
+      setNameWarning(null);
+      setPhoneWarning(null);
+      return { comboError: null, nameWarning: null, phoneWarning: null };
+    }
+
+    let combo = null;
+    let nameOnly = null;
+    let phoneOnly = null;
+
+    for (const st of storeList) {
+      const stName = normalizeStoreName(st.name);
+      const stPhone = normalizePhone(st.phone);
+
+      const isNameMatch = Boolean(cleanName && stName && cleanName.length >= 3 && cleanName === stName);
+      const isPhoneMatch = Boolean(cleanPhone && stPhone && cleanPhone.length >= 7 && cleanPhone === stPhone);
+
+      if (isNameMatch && isPhoneMatch) {
+        combo = st;
+        break; // Both name and phone match the same store
+      }
+      if (isNameMatch && !nameOnly) nameOnly = st;
+      if (isPhoneMatch && !phoneOnly) phoneOnly = st;
+    }
+
+    if (combo) {
+      setComboError(combo);
+      setNameWarning(null);
+      setPhoneWarning(null);
+      return { comboError: combo, nameWarning: null, phoneWarning: null };
+    }
+
+    setComboError(null);
+
+    if (nameOnly) {
+      setNameWarning(`⚠️ Note: A store named "${nameOnly.name}" is already registered. If this is a separate branch or outlet, you can proceed.`);
+    } else {
+      setNameWarning(null);
+    }
+
+    if (phoneOnly) {
+      setPhoneWarning(`⚠️ Note: Phone number is already associated with another store (${phoneOnly.name || phoneOnly.id}). You can proceed if you operate multiple stores.`);
+    } else {
+      setPhoneWarning(null);
+    }
+
+    return { comboError: null, nameWarning: nameOnly, phoneWarning: phoneOnly };
+  };
+
+  // Sync mode and prefetch stores whenever modal opens
   useEffect(() => {
     if (isOpen) {
-      setMode(initialMode || 'signin');
+      setMode(initialMode || 'signup');
       setErrorMsg('');
       setRegisteredStore(null);
+      setNameWarning(null);
+      setPhoneWarning(null);
+      setComboError(null);
+      fetchExistingStores();
     }
   }, [initialMode, isOpen]);
+
+  // Real-time duplicate evaluation as the merchant types
+  useEffect(() => {
+    if (mode === 'signup' && (newStore.businessName || newStore.phone)) {
+      evaluateDuplicates(newStore.businessName, newStore.phone, existingStores);
+    } else {
+      setComboError(null);
+      setNameWarning(null);
+      setPhoneWarning(null);
+    }
+  }, [newStore.businessName, newStore.phone, existingStores, mode]);
 
   if (!isOpen) return null;
 
@@ -238,6 +362,16 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
     setLoading(true);
     setErrorMsg('');
     try {
+      // Final duplicate check against latest store database:
+      // Block registration if both store name and phone number combination already exists
+      const freshStores = await fetchExistingStores();
+      const finalDupCheck = evaluateDuplicates(newStore.businessName, newStore.phone, freshStores);
+      if (finalDupCheck.comboError) {
+        setErrorMsg(`Registration not allowed: A store with this exact name ("${finalDupCheck.comboError.name}") and phone number is already registered (Store ID: ${finalDupCheck.comboError.id}). Duplicate store registrations are not permitted.`);
+        setLoading(false);
+        return;
+      }
+
       // Generate clean reservation Store ID: STORE-XXX
       const randNum = Math.floor(Math.random() * 900) + 100;
       const generatedId = `STORE-${randNum}`;
@@ -414,7 +548,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
               }}
               className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md text-xs transition flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Sign In with {registeredStore.id} &amp; Default PIN (1234)</span>
+              <span>Open Store Portal with {registeredStore.id}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
 
@@ -433,33 +567,27 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
           /* FORM STATE: Sign In vs Sign Up */
           /* ------------------------------------------------------------- */
           <div>
-            {/* Modal Navigation Tabs: Only Sign In and Sign Up for customers */}
-            <div className="flex border-b border-slate-200 pb-3 mb-6 gap-2 text-xs font-bold uppercase tracking-wider">
-              <button
-                type="button"
-                onClick={() => { setMode('signin'); setErrorMsg(''); }}
-                className={`flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 ${
-                  mode === 'signin'
-                    ? 'bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                }`}
-              >
-                <Store className="w-4 h-4" />
-                <span>Store Sign In</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('signup'); setErrorMsg(''); }}
-                className={`flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 ${
-                  mode === 'signup'
-                    ? 'bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold'
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Store Sign Up</span>
-              </button>
-            </div>
+            {/* Show Navigation Tabs ONLY if specifically in signin mode */}
+            {mode === 'signin' && (
+              <div className="flex border-b border-slate-200 pb-3 mb-6 gap-2 text-xs font-bold uppercase tracking-wider">
+                <button
+                  type="button"
+                  onClick={() => { setMode('signin'); setErrorMsg(''); }}
+                  className="flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold"
+                >
+                  <Store className="w-4 h-4" />
+                  <span>Store Sign In</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMode('signup'); setErrorMsg(''); }}
+                  className="flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>New Store Sign Up</span>
+                </button>
+              </div>
+            )}
 
             {errorMsg && (
               <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-start gap-2">
@@ -559,10 +687,22 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                       placeholder="e.g. Annai Supermarket"
                       value={newStore.businessName}
                       onChange={(e) => setNewStore({ ...newStore, businessName: e.target.value })}
-                      className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-[#00478c]"
+                      className={`w-full pl-9 pr-3.5 py-2 border rounded-xl font-medium focus:ring-2 focus:ring-[#00478c] transition ${
+                        comboError
+                          ? 'border-rose-400 bg-rose-50/20'
+                          : nameWarning
+                          ? 'border-amber-400 bg-amber-50/20'
+                          : 'border-slate-200'
+                      }`}
                     />
                     <Store className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                   </div>
+                  {nameWarning && (
+                    <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-[11px] flex items-start gap-1.5 animate-fadeIn">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+                      <span>{nameWarning}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -605,10 +745,22 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                         placeholder="+91 98765 43210"
                         value={newStore.phone}
                         onChange={(e) => setNewStore({ ...newStore, phone: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl"
+                        className={`w-full pl-9 pr-3.5 py-2 border rounded-xl font-medium focus:ring-2 focus:ring-[#00478c] transition ${
+                          comboError
+                            ? 'border-rose-400 bg-rose-50/20'
+                            : phoneWarning
+                            ? 'border-amber-400 bg-amber-50/20'
+                            : 'border-slate-200'
+                        }`}
                       />
                       <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                     </div>
+                    {phoneWarning && (
+                      <div className="mt-1.5 p-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-[11px] flex items-start gap-1.5 animate-fadeIn">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+                        <span>{phoneWarning}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -698,24 +850,39 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                   </span>
                 </label>
 
+                {comboError && (
+                  <div className="p-3.5 bg-rose-50 border border-rose-300 text-rose-800 rounded-xl text-xs flex items-start gap-2.5 shadow-2xs">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                    <div>
+                      <strong className="block font-bold text-rose-900 mb-0.5">Registration Not Allowed</strong>
+                      <span>
+                        A store with this exact name ("{comboError.name}") and phone number is already registered in the system (Store ID: {comboError.id}). This combination cannot be registered again. Please check your details or sign in.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-[#00478c] hover:bg-[#003870] text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 mt-2"
+                  disabled={loading || Boolean(comboError)}
+                  className={`w-full py-3 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 mt-2 ${
+                    comboError
+                      ? 'bg-rose-400 cursor-not-allowed opacity-80'
+                      : 'bg-[#00478c] hover:bg-[#003870] cursor-pointer'
+                  }`}
                 >
-                  <span>{loading ? 'Submitting Registration...' : 'Submit & Request Machine License'}</span>
+                  <span>
+                    {loading
+                      ? 'Submitting Registration...'
+                      : comboError
+                      ? 'Combination Already Registered'
+                      : 'Submit & Request Machine License'}
+                  </span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                <div className="text-center text-slate-500 pt-1">
-                  Already registered?{' '}
-                  <button
-                    type="button"
-                    onClick={() => { setMode('signin'); setErrorMsg(''); }}
-                    className="text-[#00478c] font-bold underline"
-                  >
-                    Sign in to Store Portal →
-                  </button>
+                <div className="text-center text-slate-400 pt-2 text-[11px]">
+                  <span>Your machine-locked license and store activation details will be delivered to your email.</span>
                 </div>
               </form>
             )}

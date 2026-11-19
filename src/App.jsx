@@ -15,9 +15,20 @@ export default function App() {
   });
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
+  const [authMode, setAuthMode] = useState('signup'); // 'signup' | 'signin'
 
-  const handleOpenAuth = (mode = 'signin') => {
+  // Support direct admin access via URL parameter (e.g., pos.plannestapp.com?admin=1)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('admin') === '1' || params.get('mode') === 'signin') {
+        setAuthMode('signin');
+        setIsAuthOpen(true);
+      }
+    } catch {}
+  }, []);
+
+  const handleOpenAuth = (mode = 'signup') => {
     setAuthMode(mode);
     setIsAuthOpen(true);
   };
