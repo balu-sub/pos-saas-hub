@@ -523,7 +523,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
               </div>
               <ul className="space-y-1.5 text-[11px] text-slate-600 list-disc list-inside">
                 <li>
-                  Sign in with your Store ID (<strong>{registeredStore.id}</strong>) and default PIN{' '}
+                  Use your Store ID (<strong>{registeredStore.id}</strong>) and default PIN{' '}
                   <strong>1234</strong> to access <strong>Terminal App &amp; Downloads</strong>.
                 </li>
                 <li>
@@ -567,28 +567,6 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
           /* FORM STATE: Sign In vs Sign Up */
           /* ------------------------------------------------------------- */
           <div>
-            {/* Show Navigation Tabs ONLY if specifically in signin mode */}
-            {mode === 'signin' && (
-              <div className="flex border-b border-slate-200 pb-3 mb-6 gap-2 text-xs font-bold uppercase tracking-wider">
-                <button
-                  type="button"
-                  onClick={() => { setMode('signin'); setErrorMsg(''); }}
-                  className="flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 bg-blue-50 text-[#00478c] border border-blue-200 shadow-2xs font-extrabold"
-                >
-                  <Store className="w-4 h-4" />
-                  <span>Store Sign In</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setMode('signup'); setErrorMsg(''); }}
-                  className="flex-1 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>New Store Sign Up</span>
-                </button>
-              </div>
-            )}
-
             {errorMsg && (
               <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -856,7 +834,7 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
                     <div>
                       <strong className="block font-bold text-rose-900 mb-0.5">Registration Not Allowed</strong>
                       <span>
-                        A store with this exact name ("{comboError.name}") and phone number is already registered in the system (Store ID: {comboError.id}). This combination cannot be registered again. Please check your details or sign in.
+                        A store with this exact name ("{comboError.name}") and phone number is already registered in the system (Store ID: {comboError.id}). This combination cannot be registered again. Please verify your store name and phone number.
                       </span>
                     </div>
                   </div>
