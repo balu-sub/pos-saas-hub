@@ -438,14 +438,14 @@ export default function AuthModal({ isOpen, initialMode, onClose, onLoginSuccess
           {
             id: `usr_${generatedId}_admin`,
             store_id: generatedId,
-            name: newStore.ownerName.trim() || 'Store Owner',
+            name: newStore.ownerName.trim() || 'Admin',
             pin: '1234',
             role: 'Admin (Full Access & User Mgmt)',
-            role_title: 'Store Owner / General Manager',
+            role_title: 'Store Administrator',
             user_role: 'Admin',
             email: newStore.email.trim(),
             phone: newStore.phone.trim(),
-            initials: (newStore.ownerName.trim() || 'SO').substring(0, 2).toUpperCase(),
+            initials: (newStore.ownerName.trim() || 'Admin').substring(0, 2).toUpperCase(),
             status: 'active',
           },
         ]);
