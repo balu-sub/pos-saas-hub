@@ -554,8 +554,44 @@ Need support? Reply to this email or contact Plannest Support.`;
         }
       }
 
+      // Also clean non-admin staff users from cloud for this store so staff roster starts fresh
+      try {
+        await supabase
+          .from('Windows_users')
+          .delete()
+          .eq('store_id', storeId)
+          .neq('role', 'Admin');
+      } catch (e) {
+        // Ignore if trigger or table not found
+      }
+
+      // Dispatch remote wipe directive to Supabase stores table so connected POS terminals automatically wipe their local SQLite DB
+      const clearTimestamp = new Date().toISOString();
+      const clearDirective = {
+        timestamp: clearTimestamp,
+        authorized_by: 'SuperAdmin',
+        action: 'WIPE_ALL_DATA_KEEP_PROFILE',
+        status: 'PENDING',
+        nonce: Math.random().toString(36).substring(2, 10),
+      };
+
+      await supabase
+        .from('stores')
+        .update({
+          bill_config: {
+            ...(st.bill_config || {}),
+            pending_clear_directive: clearDirective,
+            last_cleared_at: clearTimestamp,
+          },
+          updated_at: clearTimestamp,
+        })
+        .eq('id', storeId);
+
       await fetchData();
-      alert(`✓ All records for store "${st.name}" (${st.id}) have been cleared! The store can now start completely fresh.`);
+      alert(
+        `✓ All records for store "${st.name}" (${st.id}) have been cleared from cloud!\n\n` +
+        `A remote wipe directive has also been dispatched. Active or newly connected local POS terminals for this store will automatically wipe their local SQLite data and restart fresh within 15 seconds (preserving outlet profile & license).`
+      );
     } catch (err) {
       alert('Failed to clear store records: ' + err.message);
     } finally {
