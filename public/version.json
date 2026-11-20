@@ -4,5 +4,5 @@
   "releaseNotes": "1. Bidirectional Sync Hardening: Push-before-pull protocol, customer & user LWW outbox, parent-variant stock parity.\n2. Tax Compliance: CGST and SGST dual-tax separation in inventory editing and thermal receipts.\n3. Peripherals Stability: Resilient weighing scale auto-reconnect on COM ports, ESC/POS cash drawer pulse.\n4. Multi-Store Isolation: Strict store_id segregation on product batches and inventory ledger.",
   "downloadUrl": "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.4.7",
   "publishedAt": "2026-11-20",
-  "sha256": "7a0d09681fb21ff3fe9039c2a3ca07ff4537d3b893da89d4a9d9c490c8271c92"
+  "sha256": "f562138287706d14beb7f2945120146e57587a33b5476f7aeb21dd499105d406"
 }
