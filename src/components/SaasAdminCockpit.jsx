@@ -38,6 +38,7 @@ import {
   Copy,
   Send,
   AlertTriangle,
+  Eraser,
   Trash2,
   PowerOff,
   Unlock,
@@ -494,6 +495,62 @@ Need support? Reply to this email or contact Plannest Support.`;
       alert(`Store "${st.name}" (${st.id}) has been permanently deleted.`);
     } catch (err) {
       alert('Failed to delete store: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Clear all catalog, inventory, and transaction records for a store to start fresh (Preserves Outlet Profile & License)
+  const handleClearStoreRecords = async (st) => {
+    const confirmClear = window.confirm(
+      `Are you sure you want to CLEAR ALL RECORDS for "${st.name}" (${st.id})?\n\n` +
+      `This will wipe all products, variants, categories, orders, order items, purchase orders, suppliers, batches, ledger, and customers for Store ${st.id} so the store can start completely fresh.\n\n` +
+      `The store identity, name, phone, address, and license will be KEPT INTACT.\n\n` +
+      `Click OK to proceed.`
+    );
+    if (!confirmClear) return;
+
+    setLoading(true);
+    try {
+      const storeId = st.id;
+      const tables = [
+        'Windows_products',
+        'Windows_product_variants',
+        'Windows_categories',
+        'Windows_orders',
+        'Windows_order_items',
+        'Windows_payment_splits',
+        'Windows_suppliers',
+        'Windows_purchase_orders',
+        'Windows_purchase_order_items',
+        'Windows_three_way_matches',
+        'Windows_customers',
+        'Windows_shifts',
+        'Windows_safe_drops',
+        'Windows_product_batches',
+        'Windows_inventory_ledger',
+        'Windows_wastage_entries',
+        'Windows_outbox',
+        'products',
+        'categories',
+        'orders',
+        'order_items',
+        'suppliers',
+        'purchase_orders'
+      ];
+
+      for (const tbl of tables) {
+        try {
+          await supabase.from(tbl).delete().eq('store_id', storeId);
+        } catch (e) {
+          // Table might not exist or empty
+        }
+      }
+
+      await fetchData();
+      alert(`✓ All records for store "${st.name}" (${st.id}) have been cleared! The store can now start completely fresh.`);
+    } catch (err) {
+      alert('Failed to clear store records: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -1158,6 +1215,17 @@ Need support? Reply to this email or contact Plannest Support.`;
                       >
                         <RotateCcw className="w-3.5 h-3.5 text-purple-600" />
                         <span>Emergency Restore</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleClearStoreRecords(st)}
+                        disabled={loading}
+                        className="w-full py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                        title="Clear all catalog products, inventory batches, ledger, and sales records for this store to start completely fresh. Keeps the store outlet profile."
+                      >
+                        <Eraser className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Clear Data &amp; Start Fresh (Keep Profile)</span>
                       </button>
 
                       <div className="flex items-center gap-2 pt-0.5">
