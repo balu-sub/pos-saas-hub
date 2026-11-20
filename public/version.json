@@ -1,8 +1,8 @@
 {
-  "version": "2.4.7",
+  "version": "2.4.8",
   "minRequiredVersion": "1.0.0",
-  "releaseNotes": "1. Bidirectional Sync Hardening: Push-before-pull protocol, customer & user LWW outbox, parent-variant stock parity.\n2. Tax Compliance: CGST and SGST dual-tax separation in inventory editing and thermal receipts.\n3. Peripherals Stability: Resilient weighing scale auto-reconnect on COM ports, ESC/POS cash drawer pulse.\n4. Multi-Store Isolation: Strict store_id segregation on product batches and inventory ledger.",
-  "downloadUrl": "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.4.7",
+  "releaseNotes": "1. Printer Persistence & Kiosk Sync: Added dedicated Save Printer Settings button in Settings, binding selected receipt and barcode printers directly to Windows spooler and Chromium kiosk profiles.\n2. Thermal Print Direct Routing: Removed hardcoded printer fallbacks, ensuring billing receipts print instantly to the user-configured printer.\n3. Multi-Terminal Sync: Full release v2.4.8 available for all network counters and terminals.",
+  "downloadUrl": "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.4.8",
   "publishedAt": "2026-11-20",
-  "sha256": "f562138287706d14beb7f2945120146e57587a33b5476f7aeb21dd499105d406"
+  "sha256": "ca54a76109e396770378623a5cacef256d6f358e7c321aaed19f41cf9ef6d902"
 }
