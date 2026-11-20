@@ -4,5 +4,5 @@
   "releaseNotes": "1. Printer Persistence & Kiosk Sync: Added dedicated Save Printer Settings button in Settings, binding selected receipt and barcode printers directly to Windows spooler and Chromium kiosk profiles.\n2. Thermal Print Direct Routing: Removed hardcoded printer fallbacks, ensuring billing receipts print instantly to the user-configured printer.\n3. Multi-Terminal Sync: Full release v2.4.8 available for all network counters and terminals.",
   "downloadUrl": "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.4.9",
   "publishedAt": "2026-11-20",
-  "sha256": "e0ad895ec6a8efb714b62117d95a0b7b67bfdd1a6809a822dd8142a33c19d0db"
+  "sha256": "e11485918a9d3a3c43d71ba0758cd30fe02d56771e05944a8833f0a5a5e80d81"
 }
