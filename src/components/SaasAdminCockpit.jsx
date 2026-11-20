@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+
+function getStorePrefix(storeId) {
+  if (!storeId || typeof storeId !== 'string') return 'S001';
+  const clean = storeId.replace(/^STORE-?/i, '').replace(/^S/i, '').trim();
+  const padded = clean.length < 3 ? clean.padStart(3, '0') : clean;
+  return `S${padded}`;
+}
 import {
   ArrowRight,
   MessageSquare,
@@ -297,7 +304,7 @@ export default function SaasAdminCockpit({ onLogout }) {
       try {
         const safeStoreName = (st.name || st.id || 'STORE').trim();
         const adminPayload = {
-          id: `usr_${st.id}_admin`,
+          id: `${getStorePrefix(st.id)}_USR_admin`,
           store_id: st.id,
           name: st.bill_config?.owner_name || safeStoreName,
           pin: cleanPass,
