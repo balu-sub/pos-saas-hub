@@ -4,5 +4,5 @@
   "releaseNotes": "1. Remote Cloud-to-Local Store Reset: Clearing store records from SaaS Hub dispatches an automated administrative directive, securely wiping local SQLite operational data while preserving outlet profile, store license, and admin credentials.\n2. Automatic Outbox Purge: Prevents accidental re-synchronization of deleted local records to cloud after a remote reset.\n3. Unique Constraint & Prefix Hardening: Database-level unique indexes and prefix enforcement across all terminal and cloud tables.",
   "downloadUrl": "https://pospro.plannestapp.com/plannest-terminal.zip?v=2.5.0",
   "publishedAt": "2026-11-20",
-  "sha256": "3cb82e3d0a7670ed9181c9b7b2af808774fcf05492ee546c91cab66f8f8c93aa"
+  "sha256": "24d61d3cfb246ae851b7883bfeb71d8f0f576817675ad8ae9e407033750870e6"
 }

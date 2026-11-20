@@ -520,30 +520,25 @@ Need support? Reply to this email or contact Plannest Support.`;
     setLoading(true);
     try {
       const storeId = st.id;
+      const numPart = storeId.replace(/[^0-9]/g, '');
+      const sPrefix = `S${numPart.padStart(3, '0')}_`;
+
+      // Child/dependent tables MUST be deleted first so foreign key constraints do not block parent table deletes
       const tables = [
-        'Windows_products',
-        'Windows_product_variants',
-        'Windows_categories',
-        'Windows_orders',
-        'Windows_order_items',
         'Windows_payment_splits',
-        'Windows_suppliers',
-        'Windows_purchase_orders',
-        'Windows_purchase_order_items',
+        'Windows_order_items',
+        'Windows_orders',
         'Windows_three_way_matches',
-        'Windows_customers',
-        'Windows_shifts',
-        'Windows_safe_drops',
-        'Windows_product_batches',
+        'Windows_purchase_order_items',
+        'Windows_purchase_orders',
         'Windows_inventory_ledger',
-        'Windows_wastage_entries',
-        'Windows_outbox',
-        'products',
-        'categories',
-        'orders',
-        'order_items',
-        'suppliers',
-        'purchase_orders'
+        'Windows_product_batches',
+        'Windows_product_variants',
+        'Windows_products',
+        'Windows_categories',
+        'Windows_suppliers',
+        'Windows_customers',
+        'Windows_shifts'
       ];
 
       for (const tbl of tables) {
@@ -551,6 +546,11 @@ Need support? Reply to this email or contact Plannest Support.`;
           await supabase.from(tbl).delete().eq('store_id', storeId);
         } catch (e) {
           // Table might not exist or empty
+        }
+        try {
+          await supabase.from(tbl).delete().like('id', `${sPrefix}%`);
+        } catch (e) {
+          // ID pattern might not match
         }
       }
 
@@ -575,7 +575,7 @@ Need support? Reply to this email or contact Plannest Support.`;
         nonce: Math.random().toString(36).substring(2, 10),
       };
 
-      await supabase
+      const { error: updErr } = await supabase
         .from('stores')
         .update({
           bill_config: {
@@ -586,6 +586,11 @@ Need support? Reply to this email or contact Plannest Support.`;
           updated_at: clearTimestamp,
         })
         .eq('id', storeId);
+
+      if (updErr) {
+        console.error('Failed to set pending_clear_directive in Supabase stores:', updErr);
+        throw new Error(updErr.message);
+      }
 
       await fetchData();
       alert(
