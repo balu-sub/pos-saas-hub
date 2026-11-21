@@ -50,7 +50,11 @@ import {
   PowerOff,
   Unlock,
   RotateCcw,
-  XCircle
+  XCircle,
+  Cloud,
+  CloudOff,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 
 export default function SaasAdminCockpit({ onLogout }) {
@@ -601,6 +605,84 @@ Need support? Reply to this email or contact Plannest Support.`;
       alert('Failed to clear store records: ' + err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Toggle Cloud Data Sync vs Local Only mode
+  const handleToggleCloudSync = async (st) => {
+    const isCurrentlyLocalOnly = Boolean(
+      st.bill_config?.cloud_sync_disabled === true || st.bill_config?.sync_mode === 'local_only'
+    );
+
+    if (!isCurrentlyLocalOnly) {
+      const confirmDisconnect = window.confirm(
+        `Disconnect "${st.name}" (${st.id}) from cloud data and switch to LOCAL-ONLY mode?\n\n` +
+        `• The local terminal will operate 100% offline using its local SQLite database.\n` +
+        `• Cloud pushes and pulls (catalog, orders, customers, inventory) will be suspended for this store.\n` +
+        `• Store profile, identity, and license will remain active locally.\n\n` +
+        `Click OK to disconnect from cloud data and work only local.`
+      );
+      if (!confirmDisconnect) return;
+
+      setLoading(true);
+      try {
+        const updatedBillConfig = {
+          ...(st.bill_config || {}),
+          cloud_sync_disabled: true,
+          sync_mode: 'local_only',
+          sync_mode_updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+          .from('stores')
+          .update({
+            bill_config: updatedBillConfig,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', st.id);
+
+        if (error) throw error;
+        await fetchData();
+        alert(`✓ Store "${st.name}" (${st.id}) is now set to LOCAL-ONLY mode.\n\nCloud synchronization has been disconnected. The POS terminal will work only locally.`);
+      } catch (err) {
+        alert('Failed to switch to Local-Only mode: ' + (err.message || err));
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      const confirmReconnect = window.confirm(
+        `Reconnect "${st.name}" (${st.id}) to Cloud Data Sync?\n\n` +
+        `• The local terminal will resume automatic two-way cloud synchronization with Supabase.\n` +
+        `• Changes made will be synchronized with cloud.\n\n` +
+        `Click OK to reconnect cloud data.`
+      );
+      if (!confirmReconnect) return;
+
+      setLoading(true);
+      try {
+        const updatedBillConfig = {
+          ...(st.bill_config || {}),
+          cloud_sync_disabled: false,
+          sync_mode: 'cloud_sync',
+          sync_mode_updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+          .from('stores')
+          .update({
+            bill_config: updatedBillConfig,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', st.id);
+
+        if (error) throw error;
+        await fetchData();
+        alert(`✓ Store "${st.name}" (${st.id}) has been RECONNECTED to Cloud Sync.`);
+      } catch (err) {
+        alert('Failed to reconnect cloud sync: ' + (err.message || err));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -1208,17 +1290,31 @@ Need support? Reply to this email or contact Plannest Support.`;
                           {st.id}
                         </span>
 
-                        {isEsp ? (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
-                            <Cpu className="w-3 h-3" />
-                            ESP CrowPanel
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
-                            <Laptop className="w-3 h-3" />
-                            Windows Terminal
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {isEsp ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                              <Cpu className="w-3 h-3" />
+                              ESP CrowPanel
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
+                              <Laptop className="w-3 h-3" />
+                              Windows Terminal
+                            </span>
+                          )}
+
+                          {Boolean(st.bill_config?.cloud_sync_disabled === true || st.bill_config?.sync_mode === 'local_only') ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1" title="Store operating locally without cloud synchronization">
+                              <WifiOff className="w-3 h-3 text-amber-600" />
+                              Local Only
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1" title="Store actively synchronizing with Supabase Cloud">
+                              <Cloud className="w-3 h-3 text-emerald-500" />
+                              Cloud Synced
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <h3 className="font-black text-slate-900 text-base leading-snug">{st.name}</h3>
@@ -1275,6 +1371,30 @@ Need support? Reply to this email or contact Plannest Support.`;
                         <Eraser className="w-3.5 h-3.5 text-rose-600" />
                         <span>Clear Data &amp; Start Fresh (Keep Profile)</span>
                       </button>
+
+                      {Boolean(st.bill_config?.cloud_sync_disabled === true || st.bill_config?.sync_mode === 'local_only') ? (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCloudSync(st)}
+                          disabled={loading}
+                          className="w-full py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                          title="Store is currently running in LOCAL-ONLY mode (Cloud Disconnected). Click to reconnect to Cloud Data."
+                        >
+                          <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Local-Only Active (Click to Reconnect Cloud)</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCloudSync(st)}
+                          disabled={loading}
+                          className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                          title="Disconnect this store from cloud sync and run 100% locally with local SQLite database"
+                        >
+                          <CloudOff className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Disconnect from Cloud (Work Only Local)</span>
+                        </button>
+                      )}
 
                       <div className="flex items-center gap-2 pt-0.5">
                         <button
