@@ -515,8 +515,9 @@ Need support? Reply to this email or contact Plannest Support.`;
   const handleClearStoreRecords = async (st) => {
     const confirmClear = window.confirm(
       `Are you sure you want to CLEAR ALL RECORDS for "${st.name}" (${st.id})?\n\n` +
-      `This will wipe all products, variants, categories, orders, order items, purchase orders, suppliers, batches, ledger, and customers for Store ${st.id} so the store can start completely fresh.\n\n` +
-      `The store identity, name, phone, address, and license will be KEPT INTACT.\n\n` +
+      `This will wipe all catalog products, variants, categories, inventory batches, ledger, sales invoices/orders, order items, purchase orders, PO items, 3-way matches, suppliers, shifts, and customers for Store ${st.id} so the store can start completely fresh.\n\n` +
+      `• Outlet Profile, Address & GST/PAN WILL BE KEPT INTACT.\n` +
+      `• User Management (All Admin & Staff Operator accounts) WILL BE KEPT INTACT.\n\n` +
       `Click OK to proceed.`
     );
     if (!confirmClear) return;
@@ -558,16 +559,7 @@ Need support? Reply to this email or contact Plannest Support.`;
         }
       }
 
-      // Also clean non-admin staff users from cloud for this store so staff roster starts fresh
-      try {
-        await supabase
-          .from('Windows_users')
-          .delete()
-          .eq('store_id', storeId)
-          .neq('role', 'Admin');
-      } catch (e) {
-        // Ignore if trigger or table not found
-      }
+      // User Management (Windows_users) and Outlet Profile & GST/PAN are kept intact.
 
       // Dispatch remote wipe directive to Supabase stores table so connected POS terminals automatically wipe their local SQLite DB
       const clearTimestamp = new Date().toISOString();
